@@ -6,7 +6,30 @@
 - **Packages:** 293 official, 10 AUR
 - **AUR helper:** yay
 
-## 恢复软件指南
+## 恢复软件指南 (Restore Guide)
+
+在新系统上，您只需安装 `github-cli` 并登录，然后运行以下命令之一即可一键恢复：
+
+### 方法 A：单行命令（推荐，无需手动克隆）
+```bash
+sudo pacman -S --noconfirm github-cli && \
+gh auth login && \
+bash <(gh api repos/\$(gh api user --jq '.login')/cachy-backup/contents/backup-system.sh -H "Accept: application/vnd.github.raw") restore
+```
+
+### 方法 B：克隆仓库恢复
+```bash
+sudo pacman -S --noconfirm github-cli && \
+gh auth login && \
+gh repo clone cachy-backup && \
+cd cachy-backup && \
+chmod +x backup-system.sh && \
+./backup-system.sh restore
+```
+
+---
+
+## 手动恢复参考流程
 
 ```bash
 # 1. 恢复 pacman 配置
