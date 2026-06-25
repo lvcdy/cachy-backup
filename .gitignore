@@ -1,0 +1,7 @@
+*.tar
+*.tar.gz
+*.zip
+*.iso
+*.pkg.tar.zst
+*.log
+core

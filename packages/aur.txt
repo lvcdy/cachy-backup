@@ -1,0 +1,10 @@
+clash-verge-rev-bin
+fcitx5-theme-mint
+greetd-dms-greeter-git
+microsoft-edge-stable-bin
+obs-backgroundremoval
+qqmusic-bin
+wemeet-bin
+wps-office-cn
+wps-office-mui-zh-cn
+xterminal-bin
