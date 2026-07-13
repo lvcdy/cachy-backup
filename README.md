@@ -228,4 +228,4 @@ rsync -a dotfile/dot_config/ ~/.config/
 
 ## License
 
-MIT
+[MIT License](LICENSE) - 自由使用、修改和分发
