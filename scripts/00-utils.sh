@@ -156,6 +156,66 @@ EOF
 }
 
 # ==============================================================================
+# 日志摘要
+# ==============================================================================
+
+log_summary() {
+    local mode="${1:-unknown}"  # backup / restore
+    local logfile="$LOG_FILE"
+
+    [ ! -f "$logfile" ] && return 0
+
+    local total_lines warn_count error_count exec_count
+    total_lines=$(wc -l < "$logfile" 2>/dev/null || echo 0)
+    warn_count=$(grep -c "\[WARN\]" "$logfile" 2>/dev/null || echo 0)
+    error_count=$(grep -c "\[ERROR\]" "$logfile" 2>/dev/null || echo 0)
+    exec_count=$(grep -c "\[EXEC\]" "$logfile" 2>/dev/null || echo 0)
+
+    # 追加摘要到日志
+    {
+        echo ""
+        echo "============================================================"
+        echo "  $mode 摘要"
+        echo "  时间: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "  日志行: $total_lines"
+        echo "  执行命令: $exec_count"
+        echo "  警告: $warn_count"
+        echo "  错误: $error_count"
+        echo "============================================================"
+    } >> "$logfile" 2>/dev/null
+
+    # 如果有错误/警告，提示用户
+    if [ "$error_count" -gt 0 ] || [ "$warn_count" -gt 0 ]; then
+        echo ""
+        info_kv "日志路径" "$logfile"
+        [ "$warn_count" -gt 0 ] && info_kv "警告数" "${H_YELLOW}${warn_count}${NC}"
+        [ "$error_count" -gt 0 ] && info_kv "错误数" "${H_RED}${error_count}${NC}"
+        echo ""
+        info "查看完整日志: ${H_CYAN}cat $logfile${NC}"
+        info "查看错误: ${H_CYAN}grep ERROR $logfile${NC}"
+    else
+        echo ""
+        success "${mode} 完成，无错误/警告"
+        info_kv "日志" "$logfile"
+    fi
+}
+
+# ==============================================================================
+# 包安装进度显示
+# ==============================================================================
+
+show_package_progress() {
+    local label="$1"
+    local total="$2"
+    local missing="$3"
+    echo ""
+    info_kv "$label 总数" "${BOLD}${total}${NC}"
+    info_kv "待安装" "${H_YELLOW}${BOLD}${missing}${NC}"
+    echo ""
+    log "开始安装 $missing 个包 (总共 $total 个)..."
+}
+
+# ==============================================================================
 # 交互确认
 # ==============================================================================
 
@@ -194,14 +254,27 @@ confirm() {
 
 check_not_root() {
     if [ "$EUID" -eq 0 ]; then
+        # 如果是通过 strap.sh 调用且设置了 SUDO_USER，则允许运行
+        if [ -n "${SUDO_USER:-}" ]; then
+            warn "检测到 sudo 环境，将以用户 ${SUDO_USER} 身份运行"
+            return 0
+        fi
         fatal "请不要以 root 权限运行此脚本！\n脚本内部会在需要时自动请求 sudo。"
     fi
 }
 
 check_archlinux() {
-    if [ ! -f /etc/arch-release ]; then
-        fatal "此脚本仅支持 Arch Linux 系统"
+    # 更健壮的 Arch 系检测，兼容容器环境和衍生版
+    if [ -f /etc/os-release ]; then
+        if grep -q "ID=arch" /etc/os-release || grep -q "ID=cachyos" /etc/os-release; then
+            return 0
+        fi
     fi
+    # 备用检测：检查 pacman 是否存在
+    if command -v pacman &>/dev/null; then
+        return 0
+    fi
+    fatal "此脚本仅支持 Arch Linux 系统"
 }
 
 detect_aur_helper() {
@@ -212,4 +285,74 @@ detect_aur_helper() {
     else
         echo ""
     fi
+}
+
+# ==============================================================================
+# Pacman 锁检测
+# ==============================================================================
+
+ensure_pacman_unlocked() {
+    local lock_file="/var/lib/pacman/db.lck"
+
+    if [ ! -e "$lock_file" ]; then
+        return 0
+    fi
+
+    warn "检测到 pacman 锁文件: $lock_file"
+
+    # 检查是否有进程在使用
+    if command -v fuser &>/dev/null && fuser "$lock_file" &>/dev/null 2>&1; then
+        error "pacman 数据库正被其他进程占用"
+        fuser -v "$lock_file" 2>/dev/null || true
+        return 1
+    fi
+
+    if pgrep -x pacman &>/dev/null 2>&1; then
+        error "pacman 正在运行中，请等待完成后重试"
+        pgrep -af pacman 2>/dev/null || true
+        return 1
+    fi
+
+    # 残留锁文件，安全清理
+    warn "检测到残留锁文件，正在清理..."
+    sudo rm -f "$lock_file"
+    success "pacman 锁文件已清理"
+    return 0
+}
+
+# ==============================================================================
+# 进度追踪
+# ==============================================================================
+
+# 全局进度变量
+CURRENT_STEP=0
+TOTAL_STEPS=0
+
+init_progress() {
+    TOTAL_STEPS="$1"
+    CURRENT_STEP=0
+}
+
+next_step() {
+    CURRENT_STEP=$((CURRENT_STEP + 1))
+    local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+    echo ""
+    echo -e "${H_BLUE}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${H_BLUE}║${NC}  ${BOLD}进度 [${CURRENT_STEP}/${TOTAL_STEPS}]${NC}  ${H_CYAN}${pct}%${NC}"
+    echo -e "${H_BLUE}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
+    write_log "PROGRESS" "Step ${CURRENT_STEP}/${TOTAL_STEPS} (${pct}%)"
+}
+
+show_progress_bar() {
+    local current="$1"
+    local total="$2"
+    local width=40
+    local filled=$((current * width / total))
+    local empty=$((width - filled))
+    local pct=$((current * 100 / total))
+
+    printf "\r   ["
+    printf "%${filled}s" '' | tr ' ' '█'
+    printf "%${empty}s" '' | tr ' ' '░'
+    printf "] %3d%%" "$pct"
 }

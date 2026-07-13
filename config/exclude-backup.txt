@@ -1,0 +1,46 @@
+# ==============================================================================
+# cachy-backup - rsync 排除列表
+# 备份 ~/.config 时排除以下目录/文件
+# 语法: 每行一个模式，支持通配符
+# 注释: 以 # 开头
+# ==============================================================================
+
+# --- 缓存 ---
+.cache
+Cache
+cache
+GPUCache
+ShaderCache
+DawnCache
+
+# --- 浏览器 (体积大，登录态无法迁移) ---
+Code
+chromium
+google-chrome
+firefox
+zen
+mozilla
+
+# --- 通讯软件 (缓存大，登录态独立) ---
+discord
+Slack
+Telegram
+
+# --- 开发工具缓存 ---
+opencode
+yay
+paru
+node_modules
+
+# --- 临时文件 ---
+*.log
+*.tmp
+
+# --- 壁纸/背景 (noctalia 在 .local/share) ---
+# 图片文件由 .local/share 下的壁纸目录统一管理
+# ~/.config 内的小图片(图标/预设)不应排除
+
+# --- 文档 ---
+LICENSE
+README.md
+README-RU.md

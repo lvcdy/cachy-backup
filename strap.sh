@@ -13,14 +13,14 @@ set -euo pipefail
 #
 # ==============================================================================
 
-# --- 颜色 ---
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-YELLOW='\033[1;33m'
-BOLD='\033[1m'
-NC='\033[0m'
+# --- 颜色 (导出以便 restore.sh 使用) ---
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export BLUE='\033[0;34m'
+export CYAN='\033[0;36m'
+export YELLOW='\033[1;33m'
+export BOLD='\033[1m'
+export NC='\033[0m'
 
 # --- 环境检测 ---
 
@@ -95,8 +95,11 @@ check_dependencies() {
     done
 
     if [ ${#missing[@]} -gt 0 ]; then
-        printf "${YELLOW}>>> 安装缺失依赖: %s${NC}\n" "${missing[*]}"
-        run_as_root pacman -S --noconfirm --needed "${missing[@]}" >/dev/null 2>&1
+        printf "${YELLOW}>>> 正在安装缺失依赖: %s${NC}\n" "${missing[*]}"
+        run_as_root pacman -S --noconfirm --needed "${missing[@]}" || {
+            printf "${RED}Error: 无法安装缺失依赖，请手动安装: %s${NC}\n" "${missing[*]}"
+            exit 1
+        }
     fi
 }
 
@@ -180,7 +183,15 @@ main() {
     [ -n "${1:-}" ] && args=("$@")
 
     cd "$TARGET_DIR"
-    bash restore.sh "${args[@]}" < /dev/tty
+
+    # 如果是 root 运行，切换回原始用户执行 restore.sh
+    # 这样 restore.sh 内部的 sudo 才能正常工作
+    if [ "$(id -u)" -eq 0 ] && [ -n "${SUDO_USER:-}" ]; then
+        printf "${BLUE}>>> 切换到用户 %s 执行恢复...${NC}\n" "$SUDO_USER"
+        sudo -u "$SUDO_USER" SUDO_USER="$SUDO_USER" bash restore.sh "${args[@]}" < /dev/tty
+    else
+        bash restore.sh "${args[@]}" < /dev/tty
+    fi
 }
 
 main "$@"

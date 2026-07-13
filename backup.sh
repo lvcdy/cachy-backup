@@ -107,10 +107,15 @@ check_github_auth() {
     section "GitHub Auth" "检查 GitHub 认证状态"
 
     if ! command -v gh &>/dev/null; then
-        log "安装 GitHub CLI..."
-        exe sudo pacman -S --noconfirm --needed github-cli
+        if [ -t 0 ] || [ -c /dev/tty ]; then
+            log "安装 GitHub CLI..."
+            exe sudo pacman -S --noconfirm --needed github-cli
+        else
+            fatal "gh 未安装，请手动运行: sudo pacman -S github-cli"
+        fi
     fi
 
+    # 显式检查认证状态，避免 set -e 在非交互环境下的干扰
     if ! gh auth status &>/dev/null; then
         if [ -t 0 ] || [ -c /dev/tty ]; then
             warn "需要登录 GitHub"

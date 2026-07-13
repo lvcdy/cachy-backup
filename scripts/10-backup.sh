@@ -163,34 +163,27 @@ backup_dotfiles() {
 
     # ~/.config
     log "备份 ~/.config..."
+    local exclude_file="$SCRIPT_DIR/../config/exclude-backup.txt"
+    local exclude_args=()
+    if [ -f "$exclude_file" ]; then
+        exclude_args=(--exclude-from "$exclude_file")
+    else
+        # 回退：硬编码排除列表
+        exclude_args=(
+            --exclude='.cache' --exclude='Cache' --exclude='cache'
+            --exclude='GPUCache' --exclude='ShaderCache' --exclude='DawnCache'
+            --exclude='Code' --exclude='chromium' --exclude='google-chrome'
+            --exclude='firefox' --exclude='zen' --exclude='mozilla'
+            --exclude='discord' --exclude='Slack' --exclude='Telegram'
+            --exclude='opencode' --exclude='yay' --exclude='paru'
+            --exclude='node_modules' --exclude='*.log' --exclude='*.tmp'
+            --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg'
+            --exclude='LICENSE' --exclude='README.md' --exclude='README-RU.md'
+        )
+    fi
+
     rsync -a --delete \
-        --exclude='.cache' \
-        --exclude='Cache' \
-        --exclude='cache' \
-        --exclude='GPUCache' \
-        --exclude='ShaderCache' \
-        --exclude='DawnCache' \
-        --exclude='Code' \
-        --exclude='chromium' \
-        --exclude='google-chrome' \
-        --exclude='firefox' \
-        --exclude='zen' \
-        --exclude='mozilla' \
-        --exclude='discord' \
-        --exclude='Slack' \
-        --exclude='Telegram' \
-        --exclude='opencode' \
-        --exclude='yay' \
-        --exclude='paru' \
-        --exclude='node_modules' \
-        --exclude='*.log' \
-        --exclude='*.tmp' \
-        --exclude='*.png' \
-        --exclude='*.jpg' \
-        --exclude='*.jpeg' \
-        --exclude='LICENSE' \
-        --exclude='README.md' \
-        --exclude='README-RU.md' \
+        "${exclude_args[@]}" \
         "$HOME/.config/" "$BACKUP_DIR/dotfile/.config/" 2>/dev/null || true
 
     # ~/.local/share/fcitx5
@@ -205,9 +198,111 @@ backup_dotfiles() {
             "$HOME/.local/share/fcitx5/" "$BACKUP_DIR/dotfile/.local/share/fcitx5/" 2>/dev/null || true
     fi
 
+    # ~/.local/share/noctalia/plugins/ (Noctalia v5 插件)
+    if [ -d "$HOME/.local/share/noctalia" ]; then
+        log "备份 Noctalia 插件..."
+        mkdir -p "$BACKUP_DIR/dotfile/.local/share/noctalia"
+        rsync -a --delete \
+            "$HOME/.local/share/noctalia/" "$BACKUP_DIR/dotfile/.local/share/noctalia/" 2>/dev/null || true
+    fi
+
+    # ~/.local/state/noctalia/settings.toml (Noctalia v5 GUI 覆盖)
+    if [ -f "$HOME/.local/state/noctalia/settings.toml" ]; then
+        log "备份 Noctalia settings.toml..."
+        mkdir -p "$BACKUP_DIR/dotfile/.local/state/noctalia"
+        cp "$HOME/.local/state/noctalia/settings.toml" "$BACKUP_DIR/dotfile/.local/state/noctalia/settings.toml" 2>/dev/null || true
+    fi
+
+    # ~/.profile / ~/.bash_profile / ~/.bashrc
+    log "备份 Shell 启动文件..."
+    for f in .profile .bash_profile .bashrc .zshenv; do
+        [ -f "$HOME/$f" ] && cp "$HOME/$f" "$BACKUP_DIR/dotfile/$f"
+    done
+
+    # ~/.gitconfig
+    if [ -f "$HOME/.gitconfig" ]; then
+        log "备份 .gitconfig..."
+        cp "$HOME/.gitconfig" "$BACKUP_DIR/dotfile/.gitconfig"
+    fi
+
+    # ~/.local/bin/
+    if [ -d "$HOME/.local/bin" ] && [ "$(ls -A "$HOME/.local/bin" 2>/dev/null)" ]; then
+        log "备份 ~/.local/bin/ ..."
+        rsync -a "$HOME/.local/bin/" "$BACKUP_DIR/dotfile/.local/bin/" 2>/dev/null || true
+    fi
+
+    # ~/.local/share/fonts/
+    if [ -d "$HOME/.local/share/fonts" ] && [ "$(ls -A "$HOME/.local/share/fonts" 2>/dev/null)" ]; then
+        log "备份用户字体..."
+        rsync -a "$HOME/.local/share/fonts/" "$BACKUP_DIR/dotfile/.local/share/fonts/" 2>/dev/null || true
+    fi
+
+    # ~/.local/share/applications/ (自定义 desktop 文件)
+    if [ -d "$HOME/.local/share/applications" ] && [ "$(ls -A "$HOME/.local/share/applications" 2>/dev/null)" ]; then
+        log "备份自定义 desktop 文件..."
+        rsync -a "$HOME/.local/share/applications/" "$BACKUP_DIR/dotfile/.local/share/applications/" 2>/dev/null || true
+    fi
+
     local count
     count=$(find "$BACKUP_DIR/dotfile" -type f | wc -l)
     info_kv "Dotfiles" "${BOLD}${count}${NC}" "files"
+}
+
+# ==============================================================================
+# 备份系统元数据 (用户组/默认Shell/dconf/crontab)
+# ==============================================================================
+
+backup_system_metadata() {
+    section "System Metadata" "备份用户组 / Shell / dconf / crontab"
+
+    mkdir -p "$BACKUP_DIR/metadata"
+
+    # 用户组
+    log "备份用户组..."
+    groups "$USER" 2>/dev/null | sed 's/^[^ ]* : //' | tr ' ' '\n' | sort > "$BACKUP_DIR/metadata/user-groups.txt" || true
+    local group_count
+    group_count=$(wc -l < "$BACKUP_DIR/metadata/user-groups.txt" 2>/dev/null || echo 0)
+    info_kv "User Groups" "${BOLD}${group_count}${NC}"
+
+    # 默认 Shell
+    log "备份默认 Shell..."
+    getent passwd "$USER" 2>/dev/null | cut -d: -f7 > "$BACKUP_DIR/metadata/default-shell.txt" || echo "/bin/bash" > "$BACKUP_DIR/metadata/default-shell.txt"
+    local shell_name
+    shell_name=$(cat "$BACKUP_DIR/metadata/default-shell.txt")
+    info_kv "Default Shell" "${BOLD}${shell_name}${NC}"
+
+    # dconf 设置
+    if command -v dconf &>/dev/null; then
+        log "备份 dconf 设置..."
+        dconf dump / > "$BACKUP_DIR/metadata/dconf-user.ini" 2>/dev/null || true
+        local dconf_size
+        dconf_size=$(wc -c < "$BACKUP_DIR/metadata/dconf-user.ini" 2>/dev/null || echo 0)
+        info_kv "dconf" "${BOLD}${dconf_size}${NC}" "bytes"
+    fi
+
+    # crontab
+    log "备份 crontab..."
+    crontab -l > "$BACKUP_DIR/metadata/crontab.txt" 2>/dev/null || true
+
+    # Noctalia v5 配置状态
+    if command -v noctalia &>/dev/null; then
+        log "备份 Noctalia 配置..."
+        mkdir -p "$BACKUP_DIR/metadata/noctalia"
+        # 导出合并后的用户配置
+        noctalia config export > "$BACKUP_DIR/metadata/noctalia/config-export.toml" 2>/dev/null || true
+        # 记录版本
+        noctalia --version > "$BACKUP_DIR/metadata/noctalia/version.txt" 2>/dev/null || true
+        # 验证配置
+        noctalia config validate > "$BACKUP_DIR/metadata/noctalia/validate.txt" 2>&1 || true
+        info_kv "Noctalia" "$(cat "$BACKUP_DIR/metadata/noctalia/version.txt" 2>/dev/null || echo 'unknown')"
+    fi
+
+    # niri compositor 配置
+    if [ -f "$HOME/.config/niri/config.kdl" ]; then
+        log "备份 niri 配置..."
+        mkdir -p "$BACKUP_DIR/metadata/niri"
+        cp "$HOME/.config/niri/config.kdl" "$BACKUP_DIR/metadata/niri/config.kdl" 2>/dev/null || true
+    fi
 }
 
 # ==============================================================================
@@ -455,6 +550,7 @@ run_backup() {
     backup_configs
     backup_services
     backup_dotfiles
+    backup_system_metadata
     generate_docs
     push_to_github "$gh_user"
 
@@ -464,4 +560,6 @@ run_backup() {
     echo ""
     success "🎉 备份完成！"
     echo ""
+
+    log_summary "Backup"
 }
