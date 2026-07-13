@@ -385,7 +385,6 @@ push_to_github() {
         --exclude='scripts/' \
         --exclude='strap.sh' \
         --exclude='backup.sh' \
-        --exclude='restore.sh' \
         "$BACKUP_DIR/" "$STAGING_DIR/"
 
     cd "$STAGING_DIR"
