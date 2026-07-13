@@ -2,10 +2,14 @@
 
 CachyOS 系统备份与恢复工具。自动备份软件包列表、系统配置和 dotfile，一键恢复到新系统。
 
-- **Host:** strix-g16
-- **Kernel:** 7.1.1-2-cachyos (x86_64)
+## 系统信息
+
+- **Host:** cachyos-x8664
+- **Kernel:** 7.1.3-2-cachyos (x86_64)
 - **Packages:** 200 official + 0 AUR
 - **AUR helper:** yay
+- **Desktop:** niri + noctalia
+- **Display Manager:** greetd
 
 ## 项目结构
 
@@ -19,6 +23,8 @@ cachy-backup/
 │   ├── 10-backup.sh        # 备份模块
 │   └── 20-restore.sh       # 恢复模块
 ├── dotfile/                # rsync 管理的 dotfile
+│   ├── dot_config/         # ~/.config 备份
+│   └── private_dot_local/  # ~/.local 备份
 ├── configs/
 │   ├── pacman.conf         # pacman 配置
 │   ├── mirrorlist.txt      # 镜像源列表
@@ -141,6 +147,17 @@ end
 6. **恢复软件包** - 官方包、AUR 包、Flatpak
 7. **恢复 dotfile** - ~/.config、fcitx5 数据
 
+## 配置文件
+
+备份配置保存在 `~/.config/cachy-backup.conf`：
+
+```ini
+REPO_URL=https://github.com/lvcdy/cachy-backup.git
+GH_USER=lvcdy
+```
+
+首次备份时会自动创建配置文件。
+
 ## 手动恢复
 
 ```bash
@@ -165,6 +182,35 @@ yay -S --needed - < packages/aur.txt
 # 6. 恢复 dotfile
 rsync -a dotfile/dot_config/ ~/.config/
 ```
+
+## 备份内容
+
+### 系统配置
+- pacman.conf 和 mirrorlist
+- locale 设置
+- snapper 快照配置
+- greetd 登录管理器配置
+
+### 软件包
+- 官方软件包列表 (pacman -Qqen)
+- AUR 软件包列表 (pacman -Qqem)
+- Flatpak 软件包列表
+- AUR 包的 PKGBUILD 缓存
+
+### 用户配置 (dotfile)
+- niri 窗口管理器配置
+- noctalia 主题/Shell 配置
+- fish shell 配置
+- starship 提示符配置
+- kitty 终端配置
+- neovim 编辑器配置
+- yazi 文件管理器配置
+- fcitx5 输入法配置
+- GTK 设置
+
+### 服务
+- systemd 用户服务列表
+- systemd 系统服务列表
 
 ## 特性
 
