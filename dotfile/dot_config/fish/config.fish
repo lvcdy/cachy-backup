@@ -50,6 +50,20 @@ function 卸载
 	command yay -Rns $argv
 end
 
+# cachy-backup
+function backup
+	command ~/git/cachy-backup/backup-system.sh backup $argv
+end
+function 备份
+	backup $argv
+end
+function restore
+	command ~/git/cachy-backup/backup-system.sh restore $argv
+end
+function 恢复
+	restore $argv
+end
+
 function dotpush
 	set skip chezmoi zen mozilla thunderbird opencode Code go ibus pulse uv yay nautilus mpv firefox
 	for item in ~/.config/*
@@ -61,7 +75,17 @@ function dotpush
 	chezmoi add --recursive ~/.local/share/fcitx5 2>/dev/null
 	chezmoi cd
 	git add .
+	git diff --cached --quiet; and echo "no changes" && return 0
 	git commit -m "update (date +%Y-%m-%d_%H-%M)"
-	git push
+	if command -q gh
+		# gh 认证后 git push 自动使用 gh 凭证
+		git push; or begin
+			echo "push failed, trying to create repo..."
+			set repo (basename (pwd))
+			gh repo create $repo --private --source=. --push
+		end
+	else
+		git push
+	end
 	echo "done"
 end
