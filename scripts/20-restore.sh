@@ -7,14 +7,31 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/00-utils.sh"
 
+# 恢复模式禁用 set -e，允许单个步骤失败后继续
+set +e
+
 STAGING_DIR="${STAGING_DIR:-$HOME/.cache/cachy-backup-staging}"
 REPO_NAME="${REPO_NAME:-cachy-backup}"
+STATE_FILE="$STAGING_DIR/.restore_progress"
+
+# ==============================================================================
+# 进度追踪
+# ==============================================================================
+
+mark_done() {
+    echo "$1" >> "$STATE_FILE"
+}
+
+is_done() {
+    [ -f "$STATE_FILE" ] && grep -q "^$1$" "$STATE_FILE" 2>/dev/null
+}
 
 # ==============================================================================
 # 恢复 pacman 配置
 # ==============================================================================
 
 restore_pacman_conf() {
+    is_done "pacman_conf" && { info "pacman 配置已恢复，跳过"; return 0; }
     section "Pacman Config" "恢复 pacman 配置文件"
 
     local has_conf=0
@@ -23,20 +40,22 @@ restore_pacman_conf() {
 
     if [ "$has_conf" -eq 0 ]; then
         warn "未找到 pacman 配置文件，跳过"
+        mark_done "pacman_conf"
         return 0
     fi
 
     if confirm "是否恢复 pacman.conf 和 mirrorlist？(会覆盖当前配置)" "n"; then
         if [ -f "$STAGING_DIR/configs/pacman.conf" ]; then
-            exe sudo cp "$STAGING_DIR/configs/pacman.conf" /etc/pacman.conf
+            exe sudo cp "$STAGING_DIR/configs/pacman.conf" /etc/pacman.conf || warn "pacman.conf 恢复失败"
         fi
         if [ -f "$STAGING_DIR/configs/mirrorlist.txt" ]; then
-            exe sudo cp "$STAGING_DIR/configs/mirrorlist.txt" /etc/pacman.d/mirrorlist
+            exe sudo cp "$STAGING_DIR/configs/mirrorlist.txt" /etc/pacman.d/mirrorlist || warn "mirrorlist 恢复失败"
         fi
         success "pacman 配置已恢复"
     else
         info "跳过 pacman 配置恢复"
     fi
+    mark_done "pacman_conf"
 }
 
 # ==============================================================================
@@ -44,15 +63,16 @@ restore_pacman_conf() {
 # ==============================================================================
 
 restore_system_configs() {
+    is_done "system_configs" && { info "系统配置已恢复，跳过"; return 0; }
     section "System Configs" "恢复 locale/snapper/greetd"
 
     # locale
     if [ -f "$STAGING_DIR/configs/locale.conf" ]; then
         if confirm "是否恢复 locale 设置？" "n"; then
-            exe sudo cp "$STAGING_DIR/configs/locale.conf" /etc/locale.conf
+            exe sudo cp "$STAGING_DIR/configs/locale.conf" /etc/locale.conf || warn "locale.conf 恢复失败"
             if [ -f "$STAGING_DIR/configs/locale.gen" ]; then
-                exe sudo cp "$STAGING_DIR/configs/locale.gen" /etc/locale.gen
-                exe sudo locale-gen
+                exe sudo cp "$STAGING_DIR/configs/locale.gen" /etc/locale.gen || warn "locale.gen 恢复失败"
+                exe sudo locale-gen || warn "locale-gen 失败"
             fi
             success "locale 已恢复"
         else
@@ -64,7 +84,7 @@ restore_system_configs() {
     if [ -d "$STAGING_DIR/configs/snapper" ]; then
         if confirm "是否恢复 snapper 配置？" "n"; then
             sudo mkdir -p /etc/snapper/configs
-            exe sudo cp "$STAGING_DIR/configs/snapper"/* /etc/snapper/configs/
+            exe sudo cp "$STAGING_DIR/configs/snapper"/* /etc/snapper/configs/ || warn "snapper 恢复失败"
             success "snapper 配置已恢复"
         else
             info "跳过 snapper"
@@ -75,12 +95,13 @@ restore_system_configs() {
     if [ -d "$STAGING_DIR/configs/greetd" ]; then
         if confirm "是否恢复 greetd 配置？" "n"; then
             sudo mkdir -p /etc/greetd
-            exe sudo cp -r "$STAGING_DIR/configs/greetd"/* /etc/greetd/
+            exe sudo cp -r "$STAGING_DIR/configs/greetd"/* /etc/greetd/ || warn "greetd 恢复失败"
             success "greetd 配置已恢复"
         else
             info "跳过 greetd"
         fi
     fi
+    mark_done "system_configs"
 }
 
 # ==============================================================================
@@ -88,15 +109,17 @@ restore_system_configs() {
 # ==============================================================================
 
 update_system() {
+    is_done "system_update" && { info "系统已更新，跳过"; return 0; }
     section "System Update" "更新系统和 Keyring"
 
     log "更新 archlinux-keyring..."
-    exe sudo pacman -Sy --needed --noconfirm archlinux-keyring
+    exe sudo pacman -Sy --needed --noconfirm archlinux-keyring || warn "keyring 更新失败，继续..."
 
     log "系统全量更新..."
-    exe sudo pacman -Syyu --noconfirm
+    exe sudo pacman -Syyu --noconfirm || warn "系统更新失败，继续..."
 
     success "系统已更新"
+    mark_done "system_update"
 }
 
 # ==============================================================================
@@ -104,10 +127,12 @@ update_system() {
 # ==============================================================================
 
 restore_official_packages() {
+    is_done "official_packages" && { info "官方包已恢复，跳过"; return 0; }
     section "Official Packages" "恢复官方软件包"
 
     if [ ! -f "$STAGING_DIR/packages/official.txt" ] || [ ! -s "$STAGING_DIR/packages/official.txt" ]; then
         warn "未找到官方包列表，跳过"
+        mark_done "official_packages"
         return 0
     fi
 
@@ -116,11 +141,12 @@ restore_official_packages() {
 
     if confirm "是否恢复 ${count} 个官方软件包？" "y"; then
         log "正在安装官方软件包..."
-        exe sudo pacman -S --needed - < "$STAGING_DIR/packages/official.txt"
+        exe sudo pacman -S --needed - < "$STAGING_DIR/packages/official.txt" || warn "部分官方包安装失败"
         success "官方软件包恢复完成"
     else
         info "跳过官方软件包恢复"
     fi
+    mark_done "official_packages"
 }
 
 # ==============================================================================
@@ -128,6 +154,7 @@ restore_official_packages() {
 # ==============================================================================
 
 install_aur_helper() {
+    is_done "aur_helper" && { info "AUR 助手已安装，跳过"; return 0; }
     section "AUR Helper" "安装 AUR 助手"
 
     local helper
@@ -136,17 +163,18 @@ install_aur_helper() {
     if [ -n "$helper" ]; then
         info "已安装 AUR 助手: ${H_GREEN}${helper}${NC}"
         AUR_HELPER="$helper"
+        mark_done "aur_helper"
         return 0
     fi
 
     if confirm "未检测到 AUR 助手，是否安装 yay-bin？" "y"; then
         log "安装编译依赖..."
-        exe sudo pacman -S --needed --noconfirm base-devel git
+        exe sudo pacman -S --needed --noconfirm base-devel git || { warn "编译依赖安装失败"; mark_done "aur_helper"; return 1; }
 
         log "克隆并编译 yay-bin..."
         rm -rf /tmp/yay-bin
-        exe git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
-        (cd /tmp/yay-bin && exe makepkg -si --noconfirm)
+        exe git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin || { warn "yay 克隆失败"; mark_done "aur_helper"; return 1; }
+        (cd /tmp/yay-bin && exe makepkg -si --noconfirm) || { warn "yay 编译失败"; mark_done "aur_helper"; return 1; }
         rm -rf /tmp/yay-bin
 
         AUR_HELPER="yay"
@@ -155,6 +183,7 @@ install_aur_helper() {
         warn "未安装 AUR 助手，将无法恢复 AUR 包"
         AUR_HELPER=""
     fi
+    mark_done "aur_helper"
 }
 
 # ==============================================================================
@@ -162,10 +191,12 @@ install_aur_helper() {
 # ==============================================================================
 
 restore_aur_packages() {
+    is_done "aur_packages" && { info "AUR 包已恢复，跳过"; return 0; }
     section "AUR Packages" "恢复 AUR 软件包"
 
     if [ ! -f "$STAGING_DIR/packages/aur.txt" ] || [ ! -s "$STAGING_DIR/packages/aur.txt" ]; then
         warn "未找到 AUR 包列表，跳过"
+        mark_done "aur_packages"
         return 0
     fi
 
@@ -174,17 +205,19 @@ restore_aur_packages() {
 
     if [ -z "${AUR_HELPER:-}" ]; then
         warn "无 AUR 助手，无法恢复 AUR 包"
-        info "手动恢复: ${AUR_HELPER:-yay} -S --needed - < packages/aur.txt"
+        info "手动恢复: yay -S --needed - < packages/aur.txt"
+        mark_done "aur_packages"
         return 0
     fi
 
     if confirm "是否恢复 ${count} 个 AUR 软件包？" "y"; then
         log "正在安装 AUR 软件包..."
-        exe "$AUR_HELPER" -S --needed - < "$STAGING_DIR/packages/aur.txt"
+        exe "$AUR_HELPER" -S --needed - < "$STAGING_DIR/packages/aur.txt" || warn "部分 AUR 包安装失败"
         success "AUR 软件包恢复完成"
     else
         info "跳过 AUR 软件包恢复"
     fi
+    mark_done "aur_packages"
 }
 
 # ==============================================================================
@@ -192,10 +225,12 @@ restore_aur_packages() {
 # ==============================================================================
 
 restore_flatpak_packages() {
+    is_done "flatpak_packages" && { info "Flatpak 包已恢复，跳过"; return 0; }
     section "Flatpak Packages" "恢复 Flatpak 软件包"
 
     if [ ! -f "$STAGING_DIR/packages/flatpak.txt" ] || [ ! -s "$STAGING_DIR/packages/flatpak.txt" ]; then
         info "未找到 Flatpak 包列表，跳过"
+        mark_done "flatpak_packages"
         return 0
     fi
 
@@ -205,9 +240,10 @@ restore_flatpak_packages() {
     # 确保 flatpak 已安装
     if ! command -v flatpak &>/dev/null; then
         if confirm "未检测到 flatpak，是否安装？" "y"; then
-            exe sudo pacman -S --needed --noconfirm flatpak
+            exe sudo pacman -S --needed --noconfirm flatpak || warn "flatpak 安装失败"
         else
             warn "跳过 Flatpak 恢复"
+            mark_done "flatpak_packages"
             return 0
         fi
     fi
@@ -220,6 +256,7 @@ restore_flatpak_packages() {
     else
         info "跳过 Flatpak 软件包恢复"
     fi
+    mark_done "flatpak_packages"
 }
 
 # ==============================================================================
@@ -227,10 +264,12 @@ restore_flatpak_packages() {
 # ==============================================================================
 
 restore_dotfiles() {
+    is_done "dotfiles" && { info "dotfile 已恢复，跳过"; return 0; }
     section "Dotfiles" "恢复用户配置文件"
 
     if [ ! -d "$STAGING_DIR/dotfile" ]; then
         info "未找到 dotfile 备份，跳过"
+        mark_done "dotfiles"
         return 0
     fi
 
@@ -239,20 +278,21 @@ restore_dotfiles() {
         if [ -d "$STAGING_DIR/dotfile/dot_config" ]; then
             log "恢复 ~/.config..."
             mkdir -p "$HOME/.config"
-            exe rsync -a "$STAGING_DIR/dotfile/dot_config/" "$HOME/.config/"
+            exe rsync -a "$STAGING_DIR/dotfile/dot_config/" "$HOME/.config/" || warn "~/.config 恢复失败"
         fi
 
         # ~/.local/share/fcitx5
         if [ -d "$STAGING_DIR/dotfile/private_dot_local/private_share/fcitx5" ]; then
             log "恢复 fcitx5 数据..."
             mkdir -p "$HOME/.local/share/fcitx5"
-            exe rsync -a "$STAGING_DIR/dotfile/private_dot_local/private_share/fcitx5/" "$HOME/.local/share/fcitx5/"
+            exe rsync -a "$STAGING_DIR/dotfile/private_dot_local/private_share/fcitx5/" "$HOME/.local/share/fcitx5/" || warn "fcitx5 恢复失败"
         fi
 
         success "dotfile 已恢复"
     else
         info "跳过 dotfile 恢复"
     fi
+    mark_done "dotfiles"
 }
 
 # ==============================================================================
@@ -274,6 +314,14 @@ run_restore() {
         echo ""
     fi
 
+    # 检查是否可以恢复
+    if [ -f "$STATE_FILE" ]; then
+        local done_count
+        done_count=$(wc -l < "$STATE_FILE")
+        info "检测到上次进度 ($done_count 步已完成)，将跳过已完成的步骤"
+        echo ""
+    fi
+
     AUR_HELPER=$(detect_aur_helper)
 
     restore_pacman_conf
@@ -285,7 +333,12 @@ run_restore() {
     restore_flatpak_packages
     restore_dotfiles
 
+    # 清理进度文件
+    [ -f "$STATE_FILE" ] && rm -f "$STATE_FILE"
+
     echo ""
     success "🎉 系统恢复完成！"
+    echo ""
+    info_kv "Log File" "$LOG_FILE"
     echo ""
 }
