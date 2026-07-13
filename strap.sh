@@ -58,13 +58,14 @@ REPO_NAME="cachy-backup"
 # --- 镜像选择 ---
 
 select_mirror() {
-    # 检测脚本来源
-    local script_url="${BASH_SOURCE[0]:-$0}"
-    if [[ "$script_url" == *"gitee.com"* ]]; then
-        SELECTED_MIRROR="Gitee"
-        return 0
-    elif [[ "$script_url" == *"github.com"* ]]; then
-        SELECTED_MIRROR="GitHub"
+    # 通过 curl | bash 运行时无法检测来源，默认使用 GitHub
+    # 如果设置了 MIRROR 环境变量则使用指定镜像
+    if [ -n "${MIRROR:-}" ]; then
+        case "${MIRROR,,}" in
+            github) SELECTED_MIRROR="GitHub" ;;
+            gitee) SELECTED_MIRROR="Gitee" ;;
+            *) SELECTED_MIRROR="GitHub" ;;
+        esac
         return 0
     fi
 
