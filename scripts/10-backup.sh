@@ -415,6 +415,14 @@ push_to_github() {
         exe git commit -m "$commit_msg"
         exe git push -u origin main
         success "备份已推送到 $repo_url"
+
+        # 更新 GitHub 仓库描述
+        if command -v gh &>/dev/null; then
+            local repo_desc
+            repo_desc="CachyOS 备份 | $(hostname) | $(date '+%Y-%m-%d %H:%M')"
+            log "更新仓库描述: $repo_desc"
+            gh repo edit "$gh_user/$REPO_NAME" --description "$repo_desc" 2>/dev/null || warn "仓库描述更新失败"
+        fi
     fi
 
     local backup_size
