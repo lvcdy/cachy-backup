@@ -1,0 +1,258 @@
+# Rime user dictionary
+#@/db_name	rime_ice
+#@/db_type	userdb
+#@/rime_version	1.17.0
+#@/tick	438
+#@/user_id	d0355725-109b-4d62-8f3e-a024561b009a
+a 	啊	c=0 d=0.0970446 t=438
+ai 	爱	c=0 d=0.0980199 t=438
+an niu 	按钮	c=1 d=0.782705 t=438
+an zhao 	按照	c=3 d=2.4681 t=438
+an zhuang 	安装	c=4 d=3.05434 t=438
+an zhuang wan le 	安装完了	c=1 d=0.818731 t=438
+ba 	把	c=4 d=2.6117 t=438
+bang 	绑	c=1 d=0.970446 t=438
+bang ding 	绑定	c=2 d=1.54283 t=438
+bang jian 	绑键	c=7 d=4.07095 t=438
+bang wo 	帮我	c=1 d=0.786628 t=438
+bao cuo 	报错	c=1 d=0.878095 t=438
+bei 	被	c=1 d=1 t=392
+bei fen 	备份	c=5 d=4.36668 t=433
+bei fen dao 	备份到	c=1 d=1 t=341
+bei fen hou 	备份后	c=1 d=1 t=394
+ben fen 	本分	c=1 d=1 t=415
+bian ji qi 	编辑器	c=1 d=0.810584 t=438
+bie de 	别的	c=1 d=0.99005 t=438
+bing 	并	c=1 d=0.856415 t=438
+bo 	播	c=0 d=0.0960789 t=438
+bo fang 	播放	c=3 d=2.8026 t=438
+bo fang qi 	播放器	c=1 d=0.995012 t=438
+bo yi shou 	播一首	c=1 d=0.965605 t=438
+bu hao shi 	不好使	c=1 d=0.715338 t=438
+bu man yi 	不满意	c=1 d=0.960789 t=438
+bu shi 	不是	c=1 d=0.965605 t=438
+bu shi yong 	不适用	c=1 d=1 t=404
+bu tong 	不同	c=1 d=0.790571 t=438
+bu xiu gai 	不修改	c=1 d=0.737123 t=438
+bu yao 	不要	c=1 d=0.995012 t=438
+bu zhao ni 	不找你	c=1 d=0.918512 t=438
+bu zhi dao 	不知道	c=1 d=0.980199 t=438
+cai you 	才有	c=0 d=0.0852144 t=438
+cai you sheng 	才有声	c=1 d=0.856415 t=438
+cang ku 	仓库	c=1 d=1 t=342
+cang ku li 	仓库里	c=1 d=0.970446 t=438
+cha ru 	插入	c=1 d=0.888357 t=438
+cha ru le 	插入了	c=1 d=0.740818 t=438
+cha xia 	查下	c=1 d=0.918512 t=438
+cheng 	成	c=1 d=0.839457 t=438
+chong qi 	重启	c=1 d=1 t=438
+chu 	出	c=0 d=0.0873716 t=438
+chuang jian 	创建	c=2 d=1.18574 t=438
+chuang kou 	窗口	c=1 d=0.891366 t=438
+da 	大	c=1 d=0.955997 t=438
+da bu kai 	打不开	c=1 d=0.798516 t=438
+da kai 	打开	c=1 d=0.852144 t=438
+dan shi 	但是	c=5 d=2.72968 t=438
+dao 	到	c=2 d=1.37279 t=438
+de 	的	c=11 d=4.71193 t=438
+di zhi 	地址	c=2 d=1.9362 t=438
+ding ti 	顶替	c=1 d=1 t=393
+dou 	都	c=2 d=1.33563 t=438
+dou xu yao 	都需要	c=1 d=1 t=432
+dui bi yi xia 	对比一下	c=1 d=0.763379 t=438
+duo shao 	多少	c=1 d=0.946485 t=438
+fang bu chu lai 	放不出来	c=1 d=0.99005 t=438
+fang zai 	放在	c=1 d=1 t=369
+gai cheng 	改成	c=1 d=0.946485 t=438
+gai wei 	改为	c=5 d=3.54447 t=438
+gan shen me 	干什么	c=1 d=1 t=401
+geng huan 	更换	c=1 d=0.83527 t=438
+gong geng 	躬耕	c=1 d=0.960789 t=438
+guan li qi 	管理器	c=3 d=1.53449 t=438
+hai 	还	c=0 d=0.0965605 t=438
+hai shi 	还是	c=4 d=1.94193 t=438
+hai you mei you 	还有没有	c=1 d=0.826959 t=438
+hai you shen me 	还有什么	c=1 d=0.882497 t=438
+hai you xie qu bie 	还有些区别	c=1 d=0.970446 t=438
+hao 	好	c=1 d=0.865022 t=438
+hao kan de 	好看的	c=1 d=0.767206 t=438
+hao le 	好了	c=1 d=0.960789 t=438
+he 	和	c=5 d=2.80879 t=438
+hei se 	黑色	c=1 d=0.882497 t=438
+hen da 	很大	c=1 d=0.951229 t=438
+hen xi huan 	很喜欢	c=1 d=0.810584 t=438
+hong se de 	红色的	c=1 d=0.895834 t=438
+hou 	后	c=0 d=0.1 t=393
+huan cheng 	换成	c=1 d=0.878095 t=438
+hui 	会	c=4 d=2.69783 t=438
+hui bu hui 	会不会	c=1 d=1 t=391
+hui zhe yang 	会这样	c=1 d=0.970446 t=438
+jia 	夹	c=1 d=1 t=409
+jia zai bu chu lai 	加载不出来	c=1 d=0.873716 t=438
+jian 	键	c=1 d=0.980199 t=438
+jian cha 	检查	c=2 d=1.60754 t=438
+jian tie ban 	剪贴板	c=3 d=2.93143 t=364
+jiang 	将	c=8 d=3.83425 t=438
+jie he 	结合	c=1 d=0.891366 t=438
+jiu 	就	c=1 d=0.913931 t=438
+kan kan 	看看	c=2 d=1.38621 t=438
+kan kan na 	看看那	c=1 d=0.909373 t=438
+kan xia 	看下	c=1 d=1 t=429
+ke bu ke yi 	可不可以	c=1 d=1 t=403
+ke yi 	可以	c=1 d=1 t=340
+kuai jie 	快捷	c=1 d=0.83527 t=438
+kuai jie jian 	快捷键	c=3 d=2.23714 t=438
+le 	了	c=8 d=4.30299 t=438
+li 	里	c=1 d=0.782705 t=438
+li mi 	厘米	c=0 d=0.0895834 t=438
+li mi na 	厘米那	c=1 d=0.900325 t=438
+li mian 	里面	c=1 d=0.904837 t=438
+lian ge 	连个	c=1 d=1 t=421
+liang ge 	两个	c=2 d=1.93239 t=422
+ma 	吗	c=6 d=4.31929 t=438
+mao bo li 	毛玻璃	c=1 d=0.822835 t=438
+mei hua 	美化	c=1 d=0.755784 t=438
+mei sheng 	没声	c=3 d=2.65213 t=438
+mei you 	没有	c=6 d=3.10488 t=438
+mei you sheng yin 	没有声音	c=1 d=0.759572 t=438
+ming ling 	命令	c=2 d=1.77492 t=438
+ming ming 	明明	c=1 d=0.847894 t=438
+mo hu 	模糊	c=1 d=0.847894 t=438
+mo ren 	默认	c=3 d=2.20594 t=438
+mu lu 	目录	c=3 d=2.81241 t=377
+mu lu xia 	目录下	c=1 d=1 t=412
+mu lv 	母驴	c=1 d=1 t=376
+na 	那	c=0 d=0.0895834 t=438
+na ge 	那个	c=1 d=1 t=438
+na wo 	那我	c=1 d=1 t=402
+na ye 	那也	c=1 d=0.97531 t=438
+nei zhi 	内置	c=1 d=1 t=363
+neng 	能	c=1 d=0.814647 t=438
+ni 	你	c=2 d=1.69104 t=438
+ni bang wo 	你帮我	c=1 d=1 t=428
+ni cha yi xia 	你查一下	c=1 d=0.909373 t=438
+ni chuang jian 	你创建	c=1 d=0.941765 t=438
+ni jian cha 	你检查	c=1 d=0.722527 t=438
+ni jian cha xia 	你检查下	c=1 d=0.985112 t=438
+ni ri 	你日	c=1 d=0.843665 t=438
+pei se 	配色	c=2 d=1.62948 t=438
+pei zhi 	配置	c=17 d=8.91098 t=438
+pei zhi yi xia ai 	配置一下爱	c=1 d=0.985112 t=438
+pu bian 	普遍	c=1 d=0.951229 t=438
+qi 	器	c=1 d=0.909373 t=438
+qi dong 	启动	c=1 d=0.839457 t=438
+qi ta de 	其他的	c=1 d=0.97531 t=438
+qi ta wen ti 	其他问题	c=2 d=1.71803 t=438
+qian mian 	前面	c=1 d=0.941765 t=438
+qu bie 	区别	c=0 d=0.0965605 t=438
+qu dong 	驱动	c=1 d=0.97531 t=438
+qu xiao 	取消	c=1 d=0.802519 t=438
+ren he 	任何	c=1 d=0.995012 t=438
+shang 	上	c=2 d=1.51164 t=438
+shen me 	什么	c=6 d=3.78701 t=438
+shen men 	神门	c=1 d=1 t=434
+sheng 	声	c=1 d=0.967711 t=438
+sheng cheng 	生成	c=1 d=1 t=437
+sheng yin 	声音	c=1 d=0.802519 t=438
+shi 	是	c=10 d=5.68652 t=438
+shi bai 	失败	c=1 d=0.900325 t=438
+shi ji shang 	实际上	c=1 d=1 t=357
+shi shi 	实时	c=1 d=1 t=396
+shi yong 	使用	c=1 d=0.955997 t=438
+shi yong de 	使用的	c=0 d=0.0882497 t=438
+suo fang 	缩放	c=2 d=1.85551 t=438
+suo you 	所有	c=1 d=1 t=380
+ta 	他	c=1 d=0.767206 t=438
+tai da le 	太大了	c=3 d=2.60019 t=438
+tai ma fan le 	太麻烦了	c=1 d=0.980199 t=438
+ti gong 	提供	c=1 d=1 t=355
+ti shi 	提示	c=2 d=1.99501 t=351
+tian jia 	添加	c=2 d=1.86071 t=420
+tiao 	跳	c=0 d=0.0965605 t=438
+tiao dao 	调到	c=1 d=0.852144 t=438
+tiao jie 	调节	c=1 d=0.798516 t=438
+tiao yi shou 	跳一首	c=1 d=0.970446 t=438
+tong bu 	同步	c=1 d=0.794534 t=438
+tong bu dao 	同步到	c=1 d=1 t=397
+tong guo 	通过	c=1 d=0.790571 t=438
+wei 	为	c=4 d=2.85389 t=438
+wei shen me 	为什么	c=4 d=3.00097 t=438
+wei ta 	为它	c=1 d=0.826959 t=438
+wei zhi 	位置	c=1 d=0.918512 t=438
+wen jian 	文件	c=3 d=1.66888 t=438
+wen jian jia 	文件夹	c=2 d=1.49045 t=438
+wo 	我	c=5 d=2.85381 t=438
+wo bu shi 	我不是	c=1 d=0.806541 t=438
+wo de 	我的	c=4 d=2.62361 t=438
+wo dui 	我对	c=1 d=0.932394 t=438
+wo ke yi 	我可以	c=1 d=1 t=418
+wo ru guo 	我如果	c=1 d=1 t=388
+wo shi yong 	我是用	c=1 d=0.985112 t=438
+wo shi yong de 	我使用的	c=1 d=0.88692 t=438
+wo xi huan 	我喜欢	c=1 d=0.869358 t=438
+wo xi tong li 	我系统里	c=1 d=1 t=356
+wo xian zai 	我现在	c=2 d=1.22234 t=438
+wo zai 	我在	c=1 d=0.951229 t=438
+xi tong 	系统	c=4 d=2.73681 t=438
+xi tong li 	系统里	c=0 d=0.1 t=355
+xia 	下	c=6 d=3.9683 t=438
+xia mian 	下面	c=1 d=0.865022 t=438
+xia wo yi tiao 	吓我一跳	c=1 d=0.895834 t=438
+xian ka 	显卡	c=2 d=1.9216 t=438
+xian shi 	显示	c=1 d=0.869358 t=438
+xian zai 	现在	c=13 d=5.84706 t=438
+xian zi 	仙子	c=0 d=0.0970446 t=438
+xian zi a 	仙子啊	c=1 d=0.97531 t=438
+xiang 	想	c=1 d=1 t=374
+xiao guo 	效果	c=2 d=1.67911 t=438
+xie de 	写的	c=1 d=0.97531 t=438
+xing hao 	型号	c=1 d=0.771052 t=438
+xiu fu 	修复	c=0 d=0.0786628 t=438
+xiu fu yi xia 	修复一下	c=1 d=0.790571 t=438
+xiu gai 	修改	c=3 d=2.4529 t=438
+xiu gai wei 	修改为	c=1 d=0.814647 t=438
+xu yao 	需要	c=2 d=1.8781 t=425
+xuan ran 	渲染	c=0 d=0.0873716 t=438
+xuan ran chu 	渲染出	c=1 d=0.878095 t=438
+yang shi 	样式	c=1 d=0.955997 t=438
+yao bu 	要不	c=1 d=0.909373 t=438
+yi ci xing 	一次性	c=1 d=1 t=419
+yi ge 	一个	c=1 d=1 t=345
+yi jing 	已经	c=2 d=1.42628 t=438
+yi shou 	一首	c=0 d=0.192639 t=438
+yi si 	意思	c=1 d=0.88692 t=438
+yi xia 	一下	c=3 d=2.61834 t=438
+yi xiang 	一项	c=1 d=0.995012 t=438
+yin liang 	音量	c=2 d=1.49728 t=438
+yin xiang 	音响	c=3 d=2.51922 t=438
+yin yong 	引用	c=1 d=1 t=410
+yin yue 	音乐	c=1 d=0.946485 t=438
+ying gai 	应该	c=1 d=1 t=384
+yong 	用	c=1 d=1 t=385
+you 	又	c=3 d=1.75194 t=438
+you 	有	c=3 d=1.56897 t=438
+you 	由	c=1 d=0.88692 t=438
+you dian 	有点	c=2 d=1.54288 t=438
+you shen me 	有什么	c=1 d=0.786628 t=438
+you sheng 	有声	c=1 d=0.941765 t=438
+you xie 	有些	c=0 d=0.0965605 t=438
+yu yan 	语言	c=1 d=0.99005 t=438
+yuan yin 	原因	c=1 d=0.923116 t=438
+zai 	再	c=1 d=1 t=389
+zai 	在	c=3 d=2.60741 t=438
+zen me 	怎么	c=3 d=1.65634 t=438
+zen me ban 	怎么办	c=1 d=0.970446 t=438
+zhe ge 	这个	c=10 d=6.57121 t=438
+zhe hang 	这行	c=1 d=0.946485 t=438
+zhe shi 	这是	c=1 d=0.927743 t=438
+zhe yang 	这样	c=1 d=1 t=413
+zhi hou 	之后	c=2 d=1.56126 t=438
+zhi jie 	直接	c=2 d=1.43945 t=438
+zhi neng 	只能	c=1 d=0.786628 t=438
+zhi you 	只有	c=2 d=1.78496 t=438
+zhong duan 	终端	c=3 d=2.79348 t=438
+zhu ti 	主题	c=2 d=1.55543 t=438
+zi ji 	自己	c=1 d=0.744532 t=438
+zong lan 	总揽	c=1 d=0.794534 t=438
+zui hou 	最后	c=1 d=0.99005 t=438
+zui shi he 	最适合	c=1 d=0.937067 t=438
