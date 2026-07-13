@@ -58,6 +58,7 @@ function dotpush
 		[ -d "$item" ]; and chezmoi add --recursive "$item" 2>/dev/null
 		[ -f "$item" ]; and chezmoi add "$item" 2>/dev/null
 	end
+	chezmoi add --recursive ~/.local/share/fcitx5 2>/dev/null
 	chezmoi cd
 	git add .
 	git commit -m "update (date +%Y-%m-%d_%H-%M)"
