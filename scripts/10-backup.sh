@@ -198,6 +198,10 @@ backup_dotfiles() {
         log "备份 fcitx5 数据..."
         rsync -a --delete \
             --exclude='build' \
+            --exclude='*.prism.bin' \
+            --exclude='*.table.bin' \
+            --exclude='*.userdb' \
+            --exclude='*.userdb.txt' \
             "$HOME/.local/share/fcitx5/" "$BACKUP_DIR/dotfile/private_dot_local/private_share/fcitx5/" 2>/dev/null || true
     fi
 
