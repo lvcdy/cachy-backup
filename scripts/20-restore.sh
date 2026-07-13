@@ -14,11 +14,8 @@ STAGING_DIR="${STAGING_DIR:-$HOME/.cache/cachy-backup-staging}"
 REPO_NAME="${REPO_NAME:-cachy-backup}"
 STATE_FILE="$STAGING_DIR/.restore_progress"
 
-# 已知的显示管理器列表
-KNOWN_DMS=("sddm" "gdm" "lightdm" "ly" "greetd" "lemurs" "lxdm" "plasma-login-manager")
-
-# 需要清理的冲突包
-CONFLICT_PACKAGES=("quickshell" "sddm")
+# 备份中使用 greetd
+BACKUP_USES_GREETD=0
 
 # ==============================================================================
 # 进度追踪
@@ -37,7 +34,6 @@ is_done() {
 # ==============================================================================
 
 check_tty() {
-    # 检测是否在 TTY 环境
     if [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ]; then
         info "检测到 TTY 环境，将以纯文本模式运行"
         export TTY_MODE=1
@@ -47,107 +43,81 @@ check_tty() {
 }
 
 # ==============================================================================
-# 显示管理器冲突检测
+# 显示管理器统一处理
 # ==============================================================================
 
-check_dm_conflict() {
-    is_done "dm_conflict" && { info "显示管理器检查已完成，跳过"; return 0; }
-    section "Display Manager" "检测显示管理器冲突"
+handle_display_manager() {
+    is_done "display_manager" && { info "显示管理器已处理，跳过"; return 0; }
+    section "Display Manager" "处理显示管理器 (sddm → greetd)"
 
-    local dm_found=""
+    # 检测备份中是否有 greetd 配置
+    BACKUP_USES_GREETD=0
+    [ -d "$STAGING_DIR/configs/greetd" ] && BACKUP_USES_GREETD=1
+
+    # 检测当前系统安装了哪些 DM
     local dms_installed=()
-
-    # 检测已安装的显示管理器
-    for dm in "${KNOWN_DMS[@]}"; do
+    for dm in sddm gdm lightdm ly greetd lemurs lxdm plasma-login-manager; do
         if pacman -Q "$dm" &>/dev/null; then
             dms_installed+=("$dm")
-            [ -z "$dm_found" ] && dm_found="$dm"
         fi
     done
 
-    # 备份中使用 greetd
-    local backup_uses_greetd=0
-    [ -d "$STAGING_DIR/configs/greetd" ] && backup_uses_greetd=1
+    local has_sddm=0
+    local has_greetd=0
+    for dm in "${dms_installed[@]}"; do
+        [ "$dm" = "sddm" ] && has_sddm=1
+        [ "$dm" = "greetd" ] && has_greetd=1
+    done
 
-    if [ ${#dms_installed[@]} -gt 0 ]; then
-        echo ""
-        info "检测到已安装的显示管理器:"
-        for dm in "${dms_installed[@]}"; do
-            echo -e "       ${H_YELLOW}●${NC} $dm"
-        done
-        echo ""
+    # 场景 1: 备份使用 greetd
+    if [ "$BACKUP_USES_GREETD" -eq 1 ]; then
+        if [ "$has_sddm" -eq 1 ]; then
+            warn "检测到 sddm，备份使用 greetd"
+            echo ""
+            for dm in "${dms_installed[@]}"; do
+                echo -e "       ${H_YELLOW}●${NC} 已安装: $dm"
+            done
+            echo ""
 
-        # 如果备份使用 greetd，但系统有其他 DM
-        if [ "$backup_uses_greetd" -eq 1 ] && [[ ! " ${dms_installed[*]} " =~ " greetd " ]]; then
-            warn "备份使用 greetd，但系统有其他显示管理器"
-            if confirm "是否卸载冲突的显示管理器并安装 greetd？" "n"; then
+            if confirm "卸载 sddm 并安装 greetd？" "y"; then
                 for dm in "${dms_installed[@]}"; do
-                    log "卸载 $dm..."
-                    exe sudo pacman -Rns --noconfirm "$dm" || warn "$dm 卸载失败"
+                    if [ "$dm" != "greetd" ]; then
+                        log "卸载 $dm..."
+                        exe sudo pacman -Rns --noconfirm "$dm" || warn "$dm 卸载失败"
+                    fi
                 done
-                log "安装 greetd..."
-                exe sudo pacman -S --noconfirm --needed greetd || warn "greetd 安装失败"
+                if [ "$has_greetd" -eq 0 ]; then
+                    log "安装 greetd..."
+                    exe sudo pacman -S --noconfirm --needed greetd || warn "greetd 安装失败"
+                fi
                 success "显示管理器已切换到 greetd"
             else
-                info "保留当前显示管理器，跳过 greetd 配置"
-                # 标记不恢复 greetd
+                info "保留当前显示管理器"
                 mark_done "skip_greetd"
             fi
-        fi
-    else
-        info "未检测到已安装的显示管理器"
-        if [ "$backup_uses_greetd" -eq 1 ]; then
+        elif [ "$has_greetd" -eq 0 ] && [ ${#dms_installed[@]} -eq 0 ]; then
+            info "未检测到显示管理器"
             if confirm "备份使用 greetd，是否安装？" "y"; then
                 exe sudo pacman -S --noconfirm --needed greetd || warn "greetd 安装失败"
                 success "greetd 已安装"
             else
                 mark_done "skip_greetd"
             fi
-        fi
-    fi
-
-    mark_done "dm_conflict"
-}
-
-# ==============================================================================
-# 清理冲突包 (quickshell/sddm)
-# ==============================================================================
-
-cleanup_conflicts() {
-    is_done "cleanup" && { info "冲突包清理已完成，跳过"; return 0; }
-    section "Cleanup" "清理冲突包"
-
-    local to_remove=()
-
-    # 检测需要清理的包
-    for pkg in "${CONFLICT_PACKAGES[@]}"; do
-        if pacman -Q "$pkg" &>/dev/null; then
-            to_remove+=("$pkg")
-        fi
-    done
-
-    if [ ${#to_remove[@]} -gt 0 ]; then
-        echo ""
-        warn "检测到以下可能冲突的包:"
-        for pkg in "${to_remove[@]}"; do
-            echo -e "       ${H_YELLOW}●${NC} $pkg"
-        done
-        echo ""
-
-        if confirm "是否卸载这些包？" "y"; then
-            for pkg in "${to_remove[@]}"; do
-                log "卸载 $pkg..."
-                exe sudo pacman -Rns --noconfirm "$pkg" || warn "$pkg 卸载失败"
-            done
-            success "冲突包已清理"
         else
-            info "跳过清理"
+            info "greetd 已安装，无需切换"
         fi
     else
-        info "未检测到冲突包"
+        # 备份不使用 greetd
+        if [ ${#dms_installed[@]} -gt 0 ]; then
+            info "当前显示管理器: ${dms_installed[*]}"
+            info "备份未使用 greetd，保留当前配置"
+        else
+            info "未检测到显示管理器，备份中也无 DM 配置"
+        fi
+        mark_done "skip_greetd"
     fi
 
-    mark_done "cleanup"
+    mark_done "display_manager"
 }
 
 # ==============================================================================
@@ -168,7 +138,7 @@ restore_pacman_conf() {
         return 0
     fi
 
-    if confirm "是否恢复 pacman.conf 和 mirrorlist？(会覆盖当前配置)" "n"; then
+    if confirm "是否恢复 pacman.conf 和 mirrorlist？" "y"; then
         if [ -f "$STAGING_DIR/configs/pacman.conf" ]; then
             exe sudo cp "$STAGING_DIR/configs/pacman.conf" /etc/pacman.conf || warn "pacman.conf 恢复失败"
         fi
@@ -183,16 +153,16 @@ restore_pacman_conf() {
 }
 
 # ==============================================================================
-# 恢复 locale/snapper/greetd
+# 恢复系统配置 (locale/snapper/greetd)
 # ==============================================================================
 
 restore_system_configs() {
     is_done "system_configs" && { info "系统配置已恢复，跳过"; return 0; }
-    section "System Configs" "恢复 locale/snapper/greetd"
+    section "System Configs" "恢复 locale / snapper / greetd"
 
     # locale
     if [ -f "$STAGING_DIR/configs/locale.conf" ]; then
-        if confirm "是否恢复 locale 设置？" "n"; then
+        if confirm "是否恢复 locale 设置？" "y"; then
             exe sudo cp "$STAGING_DIR/configs/locale.conf" /etc/locale.conf || warn "locale.conf 恢复失败"
             if [ -f "$STAGING_DIR/configs/locale.gen" ]; then
                 exe sudo cp "$STAGING_DIR/configs/locale.gen" /etc/locale.gen || warn "locale.gen 恢复失败"
@@ -206,7 +176,7 @@ restore_system_configs() {
 
     # snapper
     if [ -d "$STAGING_DIR/configs/snapper" ]; then
-        if confirm "是否恢复 snapper 配置？" "n"; then
+        if confirm "是否恢复 snapper 配置？" "y"; then
             sudo mkdir -p /etc/snapper/configs
             exe sudo cp "$STAGING_DIR/configs/snapper"/* /etc/snapper/configs/ || warn "snapper 恢复失败"
             success "snapper 配置已恢复"
@@ -215,20 +185,27 @@ restore_system_configs() {
         fi
     fi
 
-    # greetd (检查是否需要跳过)
+    # greetd
     if is_done "skip_greetd"; then
-        info "跳过 greetd 配置（用户选择或存在冲突）"
+        info "跳过 greetd 配置（用户选择跳过 DM 切换）"
     elif [ -d "$STAGING_DIR/configs/greetd" ]; then
-        if confirm "是否恢复 greetd 配置？" "n"; then
+        if confirm "是否恢复 greetd 配置文件？" "y"; then
             sudo mkdir -p /etc/greetd
-            exe sudo cp -r "$STAGING_DIR/configs/greetd"/* /etc/greetd/ || warn "greetd 恢复失败"
-            # 启用 greetd 服务
+            exe sudo cp -r "$STAGING_DIR/configs/greetd"/* /etc/greetd/ || warn "greetd 配置恢复失败"
+
+            # 禁用 sddm，启用 greetd
+            if pacman -Q sddm &>/dev/null; then
+                log "禁用 sddm 服务..."
+                exe sudo systemctl disable sddm 2>/dev/null || true
+            fi
+            log "启用 greetd 服务..."
             exe sudo systemctl enable greetd || warn "greetd 服务启用失败"
-            success "greetd 配置已恢复"
+            success "greetd 配置已恢复，服务已启用"
         else
-            info "跳过 greetd"
+            info "跳过 greetd 配置"
         fi
     fi
+
     mark_done "system_configs"
 }
 
@@ -267,11 +244,9 @@ restore_official_packages() {
     local backup_count
     backup_count=$(wc -l < "$STAGING_DIR/packages/official.txt")
 
-    # 检查系统当前已安装的软件包
     local installed_count
     installed_count=$(pacman -Qqen 2>/dev/null | wc -l || echo 0)
 
-    # 计算缺失的软件包
     local missing_packages
     missing_packages=$(comm -23 <(sort "$STAGING_DIR/packages/official.txt") <(pacman -Qqen 2>/dev/null | sort) || true)
     local missing_count
@@ -387,7 +362,6 @@ restore_flatpak_packages() {
     local count
     count=$(wc -l < "$STAGING_DIR/packages/flatpak.txt")
 
-    # 确保 flatpak 已安装
     if ! command -v flatpak &>/dev/null; then
         if confirm "未检测到 flatpak，是否安装？" "y"; then
             exe sudo pacman -S --needed --noconfirm flatpak || warn "flatpak 安装失败"
@@ -423,12 +397,20 @@ restore_dotfiles() {
         return 0
     fi
 
-    if confirm "是否恢复 dotfile？(~/.config 等)" "y"; then
-        # ~/.config
+    echo ""
+    info "将恢复以下目录:"
+    [ -d "$STAGING_DIR/dotfile/.config" ] && echo -e "       ${H_YELLOW}●${NC} ~/.config (noctalia, fish, kitty, niri 等)"
+    [ -d "$STAGING_DIR/dotfile/.local" ] && echo -e "       ${H_YELLOW}●${NC} ~/.local/share/fcitx5"
+    echo ""
+
+    if confirm "是否恢复 dotfile？" "y"; then
+        # ~/.config (用 --delete 清理旧配置)
         if [ -d "$STAGING_DIR/dotfile/.config" ]; then
             log "恢复 ~/.config..."
             mkdir -p "$HOME/.config"
-            exe rsync -a "$STAGING_DIR/dotfile/.config/" "$HOME/.config/" || warn "~/.config 恢复失败"
+            exe rsync -a --delete \
+                --exclude='.cache' \
+                "$STAGING_DIR/dotfile/.config/" "$HOME/.config/" || warn "~/.config 恢复失败"
         fi
 
         # ~/.local/share/fcitx5
@@ -478,10 +460,9 @@ run_restore() {
     AUR_HELPER=$(detect_aur_helper)
 
     # 恢复流程
-    cleanup_conflicts          # 清理 quickshell/sddm 等冲突包
-    check_dm_conflict          # 检测显示管理器冲突
+    handle_display_manager    # 统一处理 sddm → greetd 切换
     restore_pacman_conf
-    restore_system_configs
+    restore_system_configs    # locale/snapper/greetd 配置
     update_system
     restore_official_packages
     install_aur_helper
@@ -499,7 +480,11 @@ run_restore() {
     # TTY 环境下提示启动桌面
     if [ "$TTY_MODE" -eq 1 ]; then
         warn "当前在 TTY 环境，恢复完成后需要手动启动桌面:"
-        echo -e "       ${H_CYAN}sudo systemctl start greetd${NC}"
+        if [ "$BACKUP_USES_GREETD" -eq 1 ]; then
+            echo -e "       ${H_CYAN}sudo systemctl start greetd${NC}"
+        else
+            echo -e "       ${H_CYAN}sudo systemctl start display-manager${NC}"
+        fi
         echo ""
     fi
 
