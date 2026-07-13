@@ -381,7 +381,6 @@ push_to_github() {
     log "增量同步备份文件..."
     exe rsync -a --delete \
         --exclude='.git/' \
-        --exclude='dotfile/' \
         --exclude='scripts/' \
         --exclude='strap.sh' \
         --exclude='backup.sh' \
