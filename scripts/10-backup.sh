@@ -419,8 +419,6 @@ push_to_github() {
         aur_count=$(wc -l < "$STAGING_DIR/packages/aur.txt" 2>/dev/null || echo 0)
         local commit_msg="Backup: $(date +%Y-%m-%d_%H-%M) | ${official_count}pkgs+${aur_count}aur"
         exe git commit -m "$commit_msg"
-        exe git push -u origin main
-        success "备份已推送到 $repo_url"
 
         # 更新 GitHub 仓库描述
         if command -v gh &>/dev/null; then
@@ -429,6 +427,8 @@ push_to_github() {
             log "更新仓库描述: $repo_desc"
             gh repo edit "$gh_user/$REPO_NAME" --description "$repo_desc" 2>/dev/null || warn "仓库描述更新失败"
         fi
+
+        success "备份完成，运行 'git push' 推送到远程仓库"
     fi
 
     local backup_size
