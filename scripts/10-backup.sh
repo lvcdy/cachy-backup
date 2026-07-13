@@ -24,14 +24,14 @@ backup_packages() {
     log "备份 pacman 官方软件包列表..."
     pacman -Qqen | sort > "$BACKUP_DIR/packages/official.txt"
     local official_count
-    official_count=$(wc -l < "$BACKUP_DIR/packages/official.txt")
+    official_count=$(wc -l < "$BACKUP_DIR/packages/official.txt" || echo 0)
     info_kv "Official" "${BOLD}${official_count}${NC}" "packages"
 
     # AUR 包
     log "备份 AUR 软件包列表..."
     pacman -Qqem 2>/dev/null | sort > "$BACKUP_DIR/packages/aur.txt" || true
     local aur_count
-    aur_count=$(wc -l < "$BACKUP_DIR/packages/aur.txt")
+    aur_count=$(wc -l < "$BACKUP_DIR/packages/aur.txt" || echo 0)
     info_kv "AUR" "${BOLD}${aur_count}${NC}" "packages"
 
     # 显式安装列表（含版本）
@@ -43,7 +43,7 @@ backup_packages() {
         log "备份 Flatpak 软件包列表..."
         flatpak list --app --columns=application 2>/dev/null | sort > "$BACKUP_DIR/packages/flatpak.txt" || true
         local flatpak_count
-        flatpak_count=$(wc -l < "$BACKUP_DIR/packages/flatpak.txt")
+        flatpak_count=$(wc -l < "$BACKUP_DIR/packages/flatpak.txt" || echo 0)
         info_kv "Flatpak" "${BOLD}${flatpak_count}${NC}" "packages"
     fi
 
@@ -218,9 +218,9 @@ generate_docs() {
     section "Documentation" "生成项目文档"
 
     local official_count aur_count flatpak_count
-    official_count=$(wc -l < "$BACKUP_DIR/packages/official.txt" 2>/dev/null || echo 0)
-    aur_count=$(wc -l < "$BACKUP_DIR/packages/aur.txt" 2>/dev/null || echo 0)
-    flatpak_count=$(wc -l < "$BACKUP_DIR/packages/flatpak.txt" 2>/dev/null || echo 0)
+    official_count=$( [ -f "$BACKUP_DIR/packages/official.txt" ] && wc -l < "$BACKUP_DIR/packages/official.txt" || echo 0)
+    aur_count=$( [ -f "$BACKUP_DIR/packages/aur.txt" ] && wc -l < "$BACKUP_DIR/packages/aur.txt" || echo 0)
+    flatpak_count=$( [ -f "$BACKUP_DIR/packages/flatpak.txt" ] && wc -l < "$BACKUP_DIR/packages/flatpak.txt" || echo 0)
 
     # .gitignore
     cat > "$BACKUP_DIR/.gitignore" <<'EOF'
@@ -305,21 +305,33 @@ push_to_github() {
         echo ""
         warn "首次备份，需要配置仓库地址"
         echo ""
-        echo -e "   ${H_CYAN}选项:${NC}"
-        echo -e "   [1] 创建新的公开仓库 (cachy-backup)"
-        echo -e "   [2] 使用已有仓库"
-        echo ""
 
-        local choice
-        read -r -p "$(echo -e "   ${H_CYAN}选择 [1-2]: ${NC}")" choice < /dev/tty
+        # 检查是否在交互式环境
+        if [ -t 0 ] || [ -c /dev/tty ]; then
+            echo -e "   ${H_CYAN}选项:${NC}"
+            echo -e "   [1] 创建新的公开仓库 (cachy-backup)"
+            echo -e "   [2] 使用已有仓库"
+            echo ""
 
-        if [ "$choice" = "2" ]; then
-            read -r -p "$(echo -e "   ${H_CYAN}输入仓库地址 (如 https://github.com/user/repo): ${NC}")" repo_url < /dev/tty
-            # 确保是 HTTPS 格式
-            repo_url="${repo_url%.git}.git"
+            local choice
+            read -r -p "$(echo -e "   ${H_CYAN}选择 [1-2]: ${NC}")" choice < /dev/tty
+
+            if [ "$choice" = "2" ]; then
+                read -r -p "$(echo -e "   ${H_CYAN}输入仓库地址 (如 https://github.com/user/repo): ${NC}")" repo_url < /dev/tty
+                # 确保是 HTTPS 格式
+                repo_url="${repo_url%.git}.git"
+            else
+                # 创建新仓库
+                repo_url="https://github.com/$gh_user/$REPO_NAME.git"
+                if ! gh repo view "$gh_user/$REPO_NAME" &>/dev/null; then
+                    log "创建公开仓库..."
+                    exe gh repo create "$REPO_NAME" --description "CachyOS system backup" --public
+                fi
+            fi
         else
-            # 创建新仓库
+            # 非交互式环境，使用默认配置
             repo_url="https://github.com/$gh_user/$REPO_NAME.git"
+            log "非交互式环境，使用默认仓库: $repo_url"
             if ! gh repo view "$gh_user/$REPO_NAME" &>/dev/null; then
                 log "创建公开仓库..."
                 exe gh repo create "$REPO_NAME" --description "CachyOS system backup" --public
@@ -357,7 +369,13 @@ push_to_github() {
 
     # 同步文件
     log "增量同步备份文件..."
-    exe rsync -a --delete --exclude='.git/' --exclude='dotfile/' "$BACKUP_DIR/" "$STAGING_DIR/"
+    exe rsync -a --delete \
+        --exclude='.git/' \
+        --exclude='dotfile/' \
+        --exclude='scripts/' \
+        --exclude='strap.sh' \
+        --exclude='backup-system.sh' \
+        "$BACKUP_DIR/" "$STAGING_DIR/"
 
     cd "$STAGING_DIR"
 
