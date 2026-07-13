@@ -11,7 +11,8 @@ CachyOS 系统备份与恢复工具。自动备份软件包列表、系统配置
 
 ```
 cachy-backup/
-├── backup-system.sh        # 主调度脚本
+├── backup.sh               # 备份脚本
+├── restore.sh              # 恢复脚本
 ├── strap.sh                # Bootstrap 一键恢复脚本
 ├── scripts/
 │   ├── 00-utils.sh         # TUI 工具函数
@@ -68,11 +69,11 @@ sudo systemctl start greetd
 ### 命令行使用
 
 ```bash
-./backup-system.sh [选项] <命令>
+# 备份
+./backup.sh [选项]
 
-命令:
-  backup   备份当前系统（默认）
-  restore  从 GitHub 恢复系统
+# 恢复
+./restore.sh [选项]
 
 选项:
   -h, --help      显示帮助信息
@@ -86,16 +87,46 @@ sudo systemctl start greetd
 
 ```bash
 # 交互式备份
-./backup-system.sh
+./backup.sh
 
 # 快速备份（跳过确认）
-./backup-system.sh backup --force
+./backup.sh --force
 
 # 预览恢复操作
-./backup-system.sh restore --dry-run
+./restore.sh --dry-run
 
 # 详细模式
-./backup-system.sh -V backup
+./backup.sh -V
+```
+
+### Kitty 快捷键
+
+在 kitty.conf 中添加：
+
+```conf
+# 备份/恢复快捷键
+map ctrl+shift+b launch --type=overlay --title="Backup" ~/git/cachy-backup/backup.sh --force
+map ctrl+shift+r launch --type=overlay --title="Restore" ~/git/cachy-backup/restore.sh --dry-run
+```
+
+### Fish 函数
+
+在 config.fish 中添加：
+
+```fish
+# cachy-backup
+function backup
+    command ~/git/cachy-backup/backup.sh $argv
+end
+function 备份
+    backup $argv
+end
+function restore
+    command ~/git/cachy-backup/restore.sh $argv
+end
+function 恢复
+    restore $argv
+end
 ```
 
 ## 恢复流程

@@ -52,13 +52,13 @@ end
 
 # cachy-backup
 function backup
-	command ~/git/cachy-backup/backup-system.sh backup $argv
+	command ~/git/cachy-backup/backup.sh $argv
 end
 function 备份
 	backup $argv
 end
 function restore
-	command ~/git/cachy-backup/backup-system.sh restore $argv
+	command ~/git/cachy-backup/restore.sh $argv
 end
 function 恢复
 	restore $argv

@@ -194,15 +194,15 @@ main() {
     printf "${GREEN}>>> 下载完成${NC}\n\n"
 
     # 执行恢复
-    chmod +x "$TARGET_DIR/backup-system.sh" 2>/dev/null || true
+    chmod +x "$TARGET_DIR/restore.sh" 2>/dev/null || true
     chmod +x "$TARGET_DIR/scripts"/*.sh 2>/dev/null || true
 
     # 传递参数给主脚本
-    local args=("restore")
+    local args=()
     [ -n "${1:-}" ] && args=("$@")
 
     cd "$TARGET_DIR"
-    bash backup-system.sh "${args[@]}" < /dev/tty
+    bash restore.sh "${args[@]}" < /dev/tty
 }
 
 main "$@"
