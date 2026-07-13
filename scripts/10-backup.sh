@@ -420,9 +420,8 @@ push_to_github() {
         local commit_msg="Backup: $(date +%Y-%m-%d_%H-%M) | ${official_count}pkgs+${aur_count}aur"
         exe git commit -m "$commit_msg"
 
-        # 先 pull 再 push，避免冲突
-        git pull --rebase 2>/dev/null || true
-        exe git push -u origin main
+        # 强制推送，确保备份内容同步到远程
+        exe git push -u origin main --force
         success "备份已推送到 $repo_url"
 
         # 更新 GitHub 仓库描述
