@@ -163,36 +163,11 @@ prepare_restore() {
         repo_url=$(grep "^REPO_URL=" "$config_file" | cut -d= -f2-)
     fi
 
-    # 如果未配置，询问仓库地址
+    # 未配置则使用默认仓库
     if [ -z "$repo_url" ]; then
-        echo ""
-        warn "未配置仓库地址"
-        echo ""
-        echo -e "   ${H_CYAN}选项:${NC}"
-        echo -e "   [1] 使用自己的仓库 (lvcdy/cachy-backup)"
-        echo -e "   [2] 输入其他仓库地址"
-        echo ""
-
-        local choice
-        read -r -p "$(echo -e "   ${H_CYAN}选择 [1-2]: ${NC}")" choice < /dev/tty
-
-        if [ "$choice" = "2" ]; then
-            read -r -p "$(echo -e "   ${H_CYAN}输入仓库地址 (如 https://github.com/user/repo): ${NC}")" repo_url < /dev/tty
-            repo_url="${repo_url%.git}.git"
-        else
-            repo_url="https://github.com/$GH_USER/$REPO_NAME.git"
-        fi
-
-        # 保存配置
-        mkdir -p "$(dirname "$config_file")"
-        echo "REPO_URL=$repo_url" > "$config_file"
-        echo "GH_USER=$GH_USER" >> "$config_file"
-        success "仓库配置已保存"
-        echo ""
+        repo_url="https://github.com/lvcdy/cachy-backup.git"
+        info "使用默认仓库: $repo_url"
     fi
-
-    # 从配置读取
-    repo_url=$(grep "^REPO_URL=" "$config_file" | cut -d= -f2-)
 
     info_kv "仓库地址" "$repo_url"
 
