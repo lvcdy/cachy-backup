@@ -129,11 +129,17 @@ check_github_auth() {
 # ==============================================================================
 
 sys_dashboard() {
+    local config_file="$HOME/.config/cachy-backup.conf"
+    local repo_url="未配置"
+    if [ -f "$config_file" ]; then
+        repo_url=$(grep "^REPO_URL=" "$config_file" | cut -d= -f2- || echo "未配置")
+    fi
+
     echo -e "${H_BLUE}╔════ SYSTEM INFO ════════════════════════════════════════╗${NC}"
     echo -e "${H_BLUE}║${NC} ${BOLD}Host${NC}     : $(hostname)"
     echo -e "${H_BLUE}║${NC} ${BOLD}Kernel${NC}   : $(uname -r)"
     echo -e "${H_BLUE}║${NC} ${BOLD}Mode${NC}     : ${H_CYAN}${MODE^^}${NC}"
-    echo -e "${H_BLUE}║${NC} ${BOLD}GitHub${NC}   : ${GH_USER:-N/A}"
+    echo -e "${H_BLUE}║${NC} ${BOLD}Repo${NC}     : ${repo_url}"
     if [ "$DRY_RUN" -eq 1 ]; then
         echo -e "${H_BLUE}║${NC} ${BOLD}Options${NC}  : ${H_YELLOW}DRY-RUN${NC}"
     fi
@@ -149,12 +155,51 @@ sys_dashboard() {
 # ==============================================================================
 
 prepare_restore() {
-    local repo_url="https://github.com/$GH_USER/$REPO_NAME.git"
+    local config_file="$HOME/.config/cachy-backup.conf"
+    local repo_url=""
+
+    # 检查是否已配置仓库
+    if [ -f "$config_file" ]; then
+        repo_url=$(grep "^REPO_URL=" "$config_file" | cut -d= -f2-)
+    fi
+
+    # 如果未配置，询问仓库地址
+    if [ -z "$repo_url" ]; then
+        echo ""
+        warn "未配置仓库地址"
+        echo ""
+        echo -e "   ${H_CYAN}选项:${NC}"
+        echo -e "   [1] 使用自己的仓库 (lvcdy/cachy-backup)"
+        echo -e "   [2] 输入其他仓库地址"
+        echo ""
+
+        local choice
+        read -r -p "$(echo -e "   ${H_CYAN}选择 [1-2]: ${NC}")" choice < /dev/tty
+
+        if [ "$choice" = "2" ]; then
+            read -r -p "$(echo -e "   ${H_CYAN}输入仓库地址 (如 https://github.com/user/repo): ${NC}")" repo_url < /dev/tty
+            repo_url="${repo_url%.git}.git"
+        else
+            repo_url="https://github.com/$GH_USER/$REPO_NAME.git"
+        fi
+
+        # 保存配置
+        mkdir -p "$(dirname "$config_file")"
+        echo "REPO_URL=$repo_url" > "$config_file"
+        echo "GH_USER=$GH_USER" >> "$config_file"
+        success "仓库配置已保存"
+        echo ""
+    fi
+
+    # 从配置读取
+    repo_url=$(grep "^REPO_URL=" "$config_file" | cut -d= -f2-)
+
+    info_kv "仓库地址" "$repo_url"
 
     if [ ! -d "$STAGING_DIR/.git" ]; then
         log "克隆备份仓库..."
         rm -rf "$STAGING_DIR"
-        exe git clone "$repo_url" "$STAGING_DIR" || fatal "克隆失败，请确保已备份过"
+        exe git clone "$repo_url" "$STAGING_DIR" || fatal "克隆失败，请检查仓库地址"
     else
         log "更新备份仓库..."
         exe git -C "$STAGING_DIR" pull || fatal "更新失败"

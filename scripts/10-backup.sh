@@ -292,17 +292,62 @@ push_to_github() {
     section "Git Push" "推送到 GitHub"
 
     local gh_user="$1"
-    local repo_url="https://github.com/$gh_user/$REPO_NAME.git"
+    local config_file="$HOME/.config/cachy-backup.conf"
+    local repo_url=""
+
+    # 检查是否已配置仓库
+    if [ -f "$config_file" ]; then
+        repo_url=$(grep "^REPO_URL=" "$config_file" | cut -d= -f2-)
+    fi
+
+    # 首次备份：配置仓库
+    if [ -z "$repo_url" ]; then
+        echo ""
+        warn "首次备份，需要配置仓库地址"
+        echo ""
+        echo -e "   ${H_CYAN}选项:${NC}"
+        echo -e "   [1] 创建新的公开仓库 (cachy-backup)"
+        echo -e "   [2] 使用已有仓库"
+        echo ""
+
+        local choice
+        read -r -p "$(echo -e "   ${H_CYAN}选择 [1-2]: ${NC}")" choice < /dev/tty
+
+        if [ "$choice" = "2" ]; then
+            read -r -p "$(echo -e "   ${H_CYAN}输入仓库地址 (如 https://github.com/user/repo): ${NC}")" repo_url < /dev/tty
+            # 确保是 HTTPS 格式
+            repo_url="${repo_url%.git}.git"
+        else
+            # 创建新仓库
+            repo_url="https://github.com/$gh_user/$REPO_NAME.git"
+            if ! gh repo view "$gh_user/$REPO_NAME" &>/dev/null; then
+                log "创建公开仓库..."
+                exe gh repo create "$REPO_NAME" --description "CachyOS system backup" --public
+            fi
+        fi
+
+        # 保存配置
+        mkdir -p "$(dirname "$config_file")"
+        echo "REPO_URL=$repo_url" > "$config_file"
+        echo "GH_USER=$gh_user" >> "$config_file"
+        success "仓库配置已保存到 $config_file"
+        echo ""
+    fi
+
+    # 从配置读取
+    repo_url=$(grep "^REPO_URL=" "$config_file" | cut -d= -f2-)
+    gh_user=$(grep "^GH_USER=" "$config_file" | cut -d= -f2-)
+
+    info_kv "仓库地址" "$repo_url"
 
     # 初始化/克隆仓库
     if [ ! -d "$STAGING_DIR/.git" ]; then
-        if gh repo view "$gh_user/$REPO_NAME" &>/dev/null; then
+        if git ls-remote "$repo_url" &>/dev/null; then
             log "克隆已有远程仓库..."
             rm -rf "$STAGING_DIR"
             exe git clone "$repo_url" "$STAGING_DIR"
         else
-            log "创建新的 GitHub 仓库..."
-            exe gh repo create "$REPO_NAME" --description "System backup: $(hostname) $(date +%Y-%m-%d)" --private
+            log "初始化本地仓库..."
             mkdir -p "$STAGING_DIR"
             git -C "$STAGING_DIR" init
             git -C "$STAGING_DIR" branch -M main
@@ -338,7 +383,7 @@ push_to_github() {
         local commit_msg="Backup: $(date +%Y-%m-%d_%H-%M) | ${official_count}pkgs+${aur_count}aur"
         exe git commit -m "$commit_msg"
         exe git push -u origin main
-        success "备份已推送到 https://github.com/$gh_user/$REPO_NAME"
+        success "备份已推送到 $repo_url"
     fi
 
     local backup_size
