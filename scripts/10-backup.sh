@@ -158,8 +158,8 @@ backup_services() {
 backup_dotfiles() {
     section "Dotfiles" "备份用户配置文件"
 
-    mkdir -p "$BACKUP_DIR/dotfile/dot_config"
-    mkdir -p "$BACKUP_DIR/dotfile/private_dot_local/private_share"
+    mkdir -p "$BACKUP_DIR/dotfile/.config"
+    mkdir -p "$BACKUP_DIR/dotfile/.local/share"
 
     # ~/.config
     log "备份 ~/.config..."
@@ -191,7 +191,7 @@ backup_dotfiles() {
         --exclude='LICENSE' \
         --exclude='README.md' \
         --exclude='README-RU.md' \
-        "$HOME/.config/" "$BACKUP_DIR/dotfile/dot_config/" 2>/dev/null || true
+        "$HOME/.config/" "$BACKUP_DIR/dotfile/.config/" 2>/dev/null || true
 
     # ~/.local/share/fcitx5
     if [ -d "$HOME/.local/share/fcitx5" ]; then
@@ -202,7 +202,7 @@ backup_dotfiles() {
             --exclude='*.table.bin' \
             --exclude='*.userdb' \
             --exclude='*.userdb.txt' \
-            "$HOME/.local/share/fcitx5/" "$BACKUP_DIR/dotfile/private_dot_local/private_share/fcitx5/" 2>/dev/null || true
+            "$HOME/.local/share/fcitx5/" "$BACKUP_DIR/dotfile/.local/share/fcitx5/" 2>/dev/null || true
     fi
 
     local count

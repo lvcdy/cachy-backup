@@ -425,17 +425,17 @@ restore_dotfiles() {
 
     if confirm "是否恢复 dotfile？(~/.config 等)" "y"; then
         # ~/.config
-        if [ -d "$STAGING_DIR/dotfile/dot_config" ]; then
+        if [ -d "$STAGING_DIR/dotfile/.config" ]; then
             log "恢复 ~/.config..."
             mkdir -p "$HOME/.config"
-            exe rsync -a "$STAGING_DIR/dotfile/dot_config/" "$HOME/.config/" || warn "~/.config 恢复失败"
+            exe rsync -a "$STAGING_DIR/dotfile/.config/" "$HOME/.config/" || warn "~/.config 恢复失败"
         fi
 
         # ~/.local/share/fcitx5
-        if [ -d "$STAGING_DIR/dotfile/private_dot_local/private_share/fcitx5" ]; then
+        if [ -d "$STAGING_DIR/dotfile/.local/share/fcitx5" ]; then
             log "恢复 fcitx5 数据..."
             mkdir -p "$HOME/.local/share/fcitx5"
-            exe rsync -a "$STAGING_DIR/dotfile/private_dot_local/private_share/fcitx5/" "$HOME/.local/share/fcitx5/" || warn "fcitx5 恢复失败"
+            exe rsync -a "$STAGING_DIR/dotfile/.local/share/fcitx5/" "$HOME/.local/share/fcitx5/" || warn "fcitx5 恢复失败"
         fi
 
         success "dotfile 已恢复"
