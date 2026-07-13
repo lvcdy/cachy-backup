@@ -14,6 +14,12 @@ STAGING_DIR="${STAGING_DIR:-$HOME/.cache/cachy-backup-staging}"
 REPO_NAME="${REPO_NAME:-cachy-backup}"
 STATE_FILE="$STAGING_DIR/.restore_progress"
 
+# 已知的显示管理器列表
+KNOWN_DMS=("sddm" "gdm" "lightdm" "ly" "greetd" "lemurs" "lxdm" "plasma-login-manager")
+
+# 需要清理的冲突包
+CONFLICT_PACKAGES=("quickshell" "sddm")
+
 # ==============================================================================
 # 进度追踪
 # ==============================================================================
@@ -24,6 +30,124 @@ mark_done() {
 
 is_done() {
     [ -f "$STATE_FILE" ] && grep -q "^$1$" "$STATE_FILE" 2>/dev/null
+}
+
+# ==============================================================================
+# TTY 环境检测
+# ==============================================================================
+
+check_tty() {
+    # 检测是否在 TTY 环境
+    if [ -z "$DISPLAY" ] && [ -z "$WAYLAND_DISPLAY" ]; then
+        info "检测到 TTY 环境，将以纯文本模式运行"
+        export TTY_MODE=1
+    else
+        export TTY_MODE=0
+    fi
+}
+
+# ==============================================================================
+# 显示管理器冲突检测
+# ==============================================================================
+
+check_dm_conflict() {
+    is_done "dm_conflict" && { info "显示管理器检查已完成，跳过"; return 0; }
+    section "Display Manager" "检测显示管理器冲突"
+
+    local dm_found=""
+    local dms_installed=()
+
+    # 检测已安装的显示管理器
+    for dm in "${KNOWN_DMS[@]}"; do
+        if pacman -Q "$dm" &>/dev/null; then
+            dms_installed+=("$dm")
+            [ -z "$dm_found" ] && dm_found="$dm"
+        fi
+    done
+
+    # 备份中使用 greetd
+    local backup_uses_greetd=0
+    [ -d "$STAGING_DIR/configs/greetd" ] && backup_uses_greetd=1
+
+    if [ ${#dms_installed[@]} -gt 0 ]; then
+        echo ""
+        info "检测到已安装的显示管理器:"
+        for dm in "${dms_installed[@]}"; do
+            echo -e "       ${H_YELLOW}●${NC} $dm"
+        done
+        echo ""
+
+        # 如果备份使用 greetd，但系统有其他 DM
+        if [ "$backup_uses_greetd" -eq 1 ] && [[ ! " ${dms_installed[*]} " =~ " greetd " ]]; then
+            warn "备份使用 greetd，但系统有其他显示管理器"
+            if confirm "是否卸载冲突的显示管理器并安装 greetd？" "n"; then
+                for dm in "${dms_installed[@]}"; do
+                    log "卸载 $dm..."
+                    exe sudo pacman -Rns --noconfirm "$dm" || warn "$dm 卸载失败"
+                done
+                log "安装 greetd..."
+                exe sudo pacman -S --noconfirm --needed greetd || warn "greetd 安装失败"
+                success "显示管理器已切换到 greetd"
+            else
+                info "保留当前显示管理器，跳过 greetd 配置"
+                # 标记不恢复 greetd
+                mark_done "skip_greetd"
+            fi
+        fi
+    else
+        info "未检测到已安装的显示管理器"
+        if [ "$backup_uses_greetd" -eq 1 ]; then
+            if confirm "备份使用 greetd，是否安装？" "y"; then
+                exe sudo pacman -S --noconfirm --needed greetd || warn "greetd 安装失败"
+                success "greetd 已安装"
+            else
+                mark_done "skip_greetd"
+            fi
+        fi
+    fi
+
+    mark_done "dm_conflict"
+}
+
+# ==============================================================================
+# 清理冲突包 (quickshell/sddm)
+# ==============================================================================
+
+cleanup_conflicts() {
+    is_done "cleanup" && { info "冲突包清理已完成，跳过"; return 0; }
+    section "Cleanup" "清理冲突包"
+
+    local to_remove=()
+
+    # 检测需要清理的包
+    for pkg in "${CONFLICT_PACKAGES[@]}"; do
+        if pacman -Q "$pkg" &>/dev/null; then
+            to_remove+=("$pkg")
+        fi
+    done
+
+    if [ ${#to_remove[@]} -gt 0 ]; then
+        echo ""
+        warn "检测到以下可能冲突的包:"
+        for pkg in "${to_remove[@]}"; do
+            echo -e "       ${H_YELLOW}●${NC} $pkg"
+        done
+        echo ""
+
+        if confirm "是否卸载这些包？" "y"; then
+            for pkg in "${to_remove[@]}"; do
+                log "卸载 $pkg..."
+                exe sudo pacman -Rns --noconfirm "$pkg" || warn "$pkg 卸载失败"
+            done
+            success "冲突包已清理"
+        else
+            info "跳过清理"
+        fi
+    else
+        info "未检测到冲突包"
+    fi
+
+    mark_done "cleanup"
 }
 
 # ==============================================================================
@@ -91,11 +215,15 @@ restore_system_configs() {
         fi
     fi
 
-    # greetd
-    if [ -d "$STAGING_DIR/configs/greetd" ]; then
+    # greetd (检查是否需要跳过)
+    if is_done "skip_greetd"; then
+        info "跳过 greetd 配置（用户选择或存在冲突）"
+    elif [ -d "$STAGING_DIR/configs/greetd" ]; then
         if confirm "是否恢复 greetd 配置？" "n"; then
             sudo mkdir -p /etc/greetd
             exe sudo cp -r "$STAGING_DIR/configs/greetd"/* /etc/greetd/ || warn "greetd 恢复失败"
+            # 启用 greetd 服务
+            exe sudo systemctl enable greetd || warn "greetd 服务启用失败"
             success "greetd 配置已恢复"
         else
             info "跳过 greetd"
@@ -303,6 +431,8 @@ run_restore() {
     local gh_user="$1"
 
     show_banner
+    check_tty
+
     section "Restore" "开始系统恢复"
 
     # 显示备份信息
@@ -311,6 +441,7 @@ run_restore() {
         info_kv "Backup Host" "$(grep '^hostname:' "$STAGING_DIR/configs/system-info.txt" | cut -d: -f2 | xargs)"
         info_kv "Backup Date" "$(grep '^date:' "$STAGING_DIR/configs/system-info.txt" | cut -d: -f2- | xargs)"
         info_kv "Backup Kernel" "$(grep '^kernel:' "$STAGING_DIR/configs/system-info.txt" | cut -d: -f2 | xargs)"
+        info_kv "TTY Mode" "$([ "$TTY_MODE" -eq 1 ] && echo 'Yes' || echo 'No')"
         echo ""
     fi
 
@@ -324,6 +455,9 @@ run_restore() {
 
     AUR_HELPER=$(detect_aur_helper)
 
+    # 恢复流程
+    cleanup_conflicts          # 清理 quickshell/sddm 等冲突包
+    check_dm_conflict          # 检测显示管理器冲突
     restore_pacman_conf
     restore_system_configs
     update_system
@@ -339,6 +473,14 @@ run_restore() {
     echo ""
     success "🎉 系统恢复完成！"
     echo ""
+
+    # TTY 环境下提示启动桌面
+    if [ "$TTY_MODE" -eq 1 ]; then
+        warn "当前在 TTY 环境，恢复完成后需要手动启动桌面:"
+        echo -e "       ${H_CYAN}sudo systemctl start greetd${NC}"
+        echo ""
+    fi
+
     info_kv "Log File" "$LOG_FILE"
     echo ""
 }

@@ -4,7 +4,7 @@ CachyOS 系统备份与恢复工具。自动备份软件包列表、系统配置
 
 - **Host:** strix-g16
 - **Kernel:** 7.1.1-2-cachyos (x86_64)
-- **Packages:** 293 official + 10 AUR
+- **Packages:** 200 official + 0 AUR
 - **AUR helper:** yay
 
 ## 项目结构
@@ -17,15 +17,20 @@ cachy-backup/
 │   ├── 00-utils.sh         # TUI 工具函数
 │   ├── 10-backup.sh        # 备份模块
 │   └── 20-restore.sh       # 恢复模块
-├── dotfile/                # chezmoi 管理的 dotfile
+├── dotfile/                # rsync 管理的 dotfile
+├── configs/
+│   ├── pacman.conf         # pacman 配置
+│   ├── mirrorlist.txt      # 镜像源列表
+│   ├── locale.conf         # locale 设置
+│   ├── locale.gen          # locale 生成配置
+│   ├── snapper/            # snapper 快照配置
+│   ├── greetd/             # greetd 登录管理器配置
+│   └── system-info.txt     # 系统信息快照
 ├── packages/
 │   ├── official.txt        # 官方源软件包列表
 │   ├── aur.txt             # AUR 软件包列表
 │   ├── flatpak.txt         # Flatpak 软件包列表
 │   ├── explicit.txt        # 显式安装的包（含版本号）
-│   ├── pacman.conf         # pacman 配置
-│   ├── mirrorlist.txt      # 镜像源列表
-│   ├── system-info.txt     # 系统信息快照
 │   └── aur-cache/          # AUR 包的 PKGBUILD 备份
 ├── services/
 │   ├── user-services.txt   # systemd 用户服务
@@ -45,6 +50,19 @@ bash <(curl -sL https://raw.githubusercontent.com/lvcdy/cachy-backup/main/strap.
 
 # 从 Gitee（国内镜像）
 MIRROR=gitee bash <(curl -sL https://gitee.com/lvcdy/cachy-backup/raw/main/strap.sh)
+```
+
+### TTY 环境恢复（桌面环境挂掉时）
+
+如果桌面环境无法启动，可以在 TTY 环境下恢复：
+
+```bash
+# 1. 切换到 TTY (Ctrl+Alt+F2)
+# 2. 登录后运行
+bash <(curl -sL https://raw.githubusercontent.com/lvcdy/cachy-backup/main/strap.sh) restore
+
+# 3. 恢复完成后启动桌面
+sudo systemctl start greetd
 ```
 
 ### 命令行使用
@@ -80,6 +98,18 @@ MIRROR=gitee bash <(curl -sL https://gitee.com/lvcdy/cachy-backup/raw/main/strap
 ./backup-system.sh -V backup
 ```
 
+## 恢复流程
+
+恢复脚本会自动执行以下步骤：
+
+1. **清理冲突包** - 检测并卸载 quickshell/sddm 等冲突包
+2. **显示管理器检测** - 检测已安装的显示管理器，处理 greetd 冲突
+3. **恢复 pacman 配置** - mirrorlist、pacman.conf
+4. **恢复系统配置** - locale、snapper、greetd
+5. **更新系统** - keyring、系统更新
+6. **恢复软件包** - 官方包、AUR 包、Flatpak
+7. **恢复 dotfile** - ~/.config、fcitx5 数据
+
 ## 手动恢复
 
 ```bash
@@ -101,42 +131,22 @@ cd /tmp/yay-bin && makepkg -si
 # 5. 安装 AUR 软件包
 yay -S --needed - < packages/aur.txt
 
-# 6. 恢复 Flatpak 软件包
-flatpak install -y $(cat packages/flatpak.txt)
-
-# 7. 恢复 dotfile
-chezmoi init --source ~/cachy-backup/dotfile
-chezmoi apply
-```
-
-## 备份 Dotfile
-
-使用 [chezmoi](https://www.chezmoi.io/) 管理 dotfile，配置文件位于 `~/.config/chezmoi/chezmoi.yaml`：
-
-```yaml
-sourceDir: "/home/zhz/git/cachy-backup/dotfile"
-```
-
-添加新文件：
-```bash
-chezmoi add --recursive ~/.config
-```
-
-推送更新：
-```bash
-chezmoi cd && git add . && git commit -m "update $(date +%Y-%m-%d)" && git push
+# 6. 恢复 dotfile
+rsync -a dotfile/dot_config/ ~/.config/
 ```
 
 ## 特性
 
 - **模块化架构**: 备份/恢复逻辑分离到独立模块
 - **TUI 界面**: 彩色输出，清晰的进度显示
+- **TTY 支持**: 可在纯文本环境下运行
+- **显示管理器检测**: 自动检测并处理 DM 冲突
+- **冲突包清理**: 自动清理 quickshell/sddm 等冲突包
+- **断点续传**: 恢复中断后可继续
 - **Flatpak 支持**: 自动备份和恢复 Flatpak 应用
 - **服务备份**: 记录启用的 systemd 服务
 - **Dry-run 模式**: 预览操作，不实际执行
 - **Force 模式**: 跳过确认，适合自动化
-- **Bootstrap 脚本**: 一键恢复，支持 GitHub/Gitee 镜像
-- **chezmoi 集成**: 自动恢复 dotfile
 
 ## License
 
