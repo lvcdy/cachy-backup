@@ -249,6 +249,10 @@ EOF
 - **Packages:** ${official_count} official, ${aur_count} AUR, ${flatpak_count} flatpak
 - **AUR helper:** ${AUR_HELPER:-yay}
 
+## 最近同步
+
+$(date '+%Y-%m-%d %H:%M:%S')
+
 ## 一键恢复
 
 \`\`\`bash
@@ -390,6 +394,14 @@ push_to_github() {
     fi
 
     git remote set-url origin "$repo_url" 2>/dev/null || true
+
+    # 更新主 README.md 中的最近同步时间
+    if [ -f "$STAGING_DIR/README.md" ]; then
+        local sync_time
+        sync_time=$(date '+%Y-%m-%d %H:%M:%S')
+        sed -i "s|- \*\*最近同步:\*\*.*|- **最近同步:** $sync_time|" "$STAGING_DIR/README.md"
+        log "更新最近同步时间: $sync_time"
+    fi
 
     git add -A
     if git diff --cached --quiet; then

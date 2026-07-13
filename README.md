@@ -10,6 +10,7 @@ CachyOS 系统备份与恢复工具。自动备份软件包列表、系统配置
 - **AUR helper:** yay
 - **Desktop:** niri + noctalia
 - **Display Manager:** greetd
+- **最近同步:** 2026-07-13 20:15:00
 
 ## 项目结构
 
