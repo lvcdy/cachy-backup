@@ -185,6 +185,12 @@ backup_dotfiles() {
         --exclude='node_modules' \
         --exclude='*.log' \
         --exclude='*.tmp' \
+        --exclude='*.png' \
+        --exclude='*.jpg' \
+        --exclude='*.jpeg' \
+        --exclude='LICENSE' \
+        --exclude='README.md' \
+        --exclude='README-RU.md' \
         "$HOME/.config/" "$BACKUP_DIR/dotfile/dot_config/" 2>/dev/null || true
 
     # ~/.local/share/fcitx5
