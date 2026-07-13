@@ -54,10 +54,10 @@ cachy-backup/
 
 ```bash
 # 从 GitHub
-bash <(curl -sL https://raw.githubusercontent.com/lvcdy/cachy-backup/main/strap.sh)
+curl -sL https://raw.githubusercontent.com/lvcdy/cachy-backup/main/strap.sh | bash
 
 # 从 Gitee（国内镜像）
-MIRROR=gitee bash <(curl -sL https://gitee.com/lvcdy/cachy-backup/raw/main/strap.sh)
+MIRROR=gitee curl -sL https://gitee.com/lvcdy/cachy-backup/raw/main/strap.sh | bash
 ```
 
 ### TTY 环境恢复（桌面环境挂掉时）
@@ -67,7 +67,7 @@ MIRROR=gitee bash <(curl -sL https://gitee.com/lvcdy/cachy-backup/raw/main/strap
 ```bash
 # 1. 切换到 TTY (Ctrl+Alt+F2)
 # 2. 登录后运行
-bash <(curl -sL https://raw.githubusercontent.com/lvcdy/cachy-backup/main/strap.sh) restore
+curl -sL https://raw.githubusercontent.com/lvcdy/cachy-backup/main/strap.sh | bash
 
 # 3. 恢复完成后启动桌面
 sudo systemctl start greetd
