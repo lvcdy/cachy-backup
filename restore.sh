@@ -89,28 +89,13 @@ parse_args() {
 }
 
 # ==============================================================================
-# GitHub 认证
+# GitHub 认证 (恢复时不需要)
 # ==============================================================================
 
 check_github_auth() {
-    section "GitHub Auth" "检查 GitHub 认证状态"
-
-    if ! command -v gh &>/dev/null; then
-        log "安装 GitHub CLI..."
-        exe sudo pacman -S --noconfirm --needed github-cli
-    fi
-
-    if ! gh auth status &>/dev/null; then
-        if [ -t 0 ] || [ -c /dev/tty ]; then
-            warn "需要登录 GitHub"
-            exe gh auth login -p https -w
-        else
-            fatal "gh 未登录，请先运行 'gh auth login'"
-        fi
-    fi
-
-    GH_USER=$(gh api user --jq '.login') || fatal "无法获取 GitHub 用户名"
-    info_kv "GitHub User" "${H_GREEN}${GH_USER}${NC}"
+    # 恢复操作不需要 GitHub 认证
+    # gh 仅在备份时用于创建仓库和更新描述
+    return 0
 }
 
 # ==============================================================================
