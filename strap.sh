@@ -58,8 +58,15 @@ REPO_NAME="cachy-backup"
 # --- 镜像选择 ---
 
 select_mirror() {
-    local default_choice="1"
-    local default_name="GitHub"
+    # 检测脚本来源
+    local script_url="${BASH_SOURCE[0]:-$0}"
+    if [[ "$script_url" == *"gitee.com"* ]]; then
+        SELECTED_MIRROR="Gitee"
+        return 0
+    elif [[ "$script_url" == *"github.com"* ]]; then
+        SELECTED_MIRROR="GitHub"
+        return 0
+    fi
 
     # 检测是否在中国
     local current_tz=""
@@ -68,41 +75,11 @@ select_mirror() {
     fi
 
     if [[ "$current_tz" == *"Asia/Shanghai"* ]] || [[ "$current_tz" == *"Chongqing"* ]] || [[ "$current_tz" == *"Urumqi"* ]]; then
-        default_choice="2"
-        default_name="Gitee"
-    fi
-
-    if [ -n "${MIRROR:-}" ]; then
-        case "${MIRROR,,}" in
-            github) SELECTED_MIRROR="GitHub" ;;
-            gitee) SELECTED_MIRROR="Gitee" ;;
-            *)
-                printf "${RED}Error: 未知镜像 '%s' (支持: github, gitee)${NC}\n" "$MIRROR"
-                exit 1
-                ;;
-        esac
+        SELECTED_MIRROR="Gitee"
         return 0
     fi
 
-    printf "${BLUE}>>> 选择下载镜像${NC}\n"
-    printf "  [1] GitHub  https://github.com/lvcdy/cachy-backup\n"
-    printf "  [2] Gitee   https://gitee.com/lvcdy/cachy-backup\n"
-    printf "\n"
-    printf "默认: %s (直接回车使用默认)\n" "$default_name"
-    printf "选择 [1-2]: "
-
-    local choice=""
-    read -r choice < /dev/tty || true
-    choice=${choice:-$default_choice}
-
-    case "$choice" in
-        1) SELECTED_MIRROR="GitHub" ;;
-        2) SELECTED_MIRROR="Gitee" ;;
-        *)
-            printf "${RED}Error: 无效选择 '%s'${NC}\n" "$choice"
-            exit 1
-            ;;
-    esac
+    SELECTED_MIRROR="GitHub"
 }
 
 # --- 依赖检查 ---

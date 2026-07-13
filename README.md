@@ -57,7 +57,7 @@ cachy-backup/
 curl -sL https://raw.githubusercontent.com/lvcdy/cachy-backup/main/strap.sh | bash
 
 # 从 Gitee（国内镜像）
-MIRROR=gitee curl -sL https://gitee.com/lvcdy/cachy-backup/raw/main/strap.sh | bash
+curl -sL https://gitee.com/lvcdy/cachy-backup/raw/main/strap.sh | bash
 ```
 
 ### TTY 环境恢复（桌面环境挂掉时）
