@@ -264,12 +264,34 @@ restore_official_packages() {
         return 0
     fi
 
-    local count
-    count=$(wc -l < "$STAGING_DIR/packages/official.txt")
+    local backup_count
+    backup_count=$(wc -l < "$STAGING_DIR/packages/official.txt")
 
-    if confirm "是否恢复 ${count} 个官方软件包？" "y"; then
-        log "正在安装官方软件包..."
-        exe sudo pacman -S --needed - < "$STAGING_DIR/packages/official.txt" || warn "部分官方包安装失败"
+    # 检查系统当前已安装的软件包
+    local installed_count
+    installed_count=$(pacman -Qqen 2>/dev/null | wc -l || echo 0)
+
+    # 计算缺失的软件包
+    local missing_packages
+    missing_packages=$(comm -23 <(sort "$STAGING_DIR/packages/official.txt") <(pacman -Qqen 2>/dev/null | sort) || true)
+    local missing_count
+    missing_count=$(echo "$missing_packages" | grep -c . || echo 0)
+
+    echo ""
+    info_kv "备份包数" "${BOLD}${backup_count}${NC}"
+    info_kv "已安装" "${BOLD}${installed_count}${NC}"
+    info_kv "缺失" "${H_YELLOW}${BOLD}${missing_count}${NC}"
+    echo ""
+
+    if [ "$missing_count" -eq 0 ]; then
+        success "所有官方包已安装，无需更新"
+        mark_done "official_packages"
+        return 0
+    fi
+
+    if confirm "是否安装缺失的 ${missing_count} 个官方软件包？" "y"; then
+        log "正在安装缺失的官方软件包..."
+        echo "$missing_packages" | sudo pacman -S --needed --noconfirm - || warn "部分官方包安装失败"
         success "官方软件包恢复完成"
     else
         info "跳过官方软件包恢复"

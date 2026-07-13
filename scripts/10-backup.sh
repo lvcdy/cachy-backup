@@ -293,7 +293,7 @@ EOF
 # ==============================================================================
 
 push_to_github() {
-    section "Git Push" "推送到 GitHub"
+    section "Git Push" "推送到远程仓库"
 
     local gh_user="$1"
     local config_file="$HOME/.config/cachy-backup.conf"
@@ -313,31 +313,37 @@ push_to_github() {
         # 检查是否在交互式环境
         if [ -t 0 ] || [ -c /dev/tty ]; then
             echo -e "   ${H_CYAN}选项:${NC}"
-            echo -e "   [1] 创建新的公开仓库 (cachy-backup)"
-            echo -e "   [2] 使用已有仓库"
+            echo -e "   [1] GitHub (创建新仓库)"
+            echo -e "   [2] Gitee (国内镜像)"
+            echo -e "   [3] 使用已有仓库"
             echo ""
 
             local choice
-            read -r -p "$(echo -e "   ${H_CYAN}选择 [1-2]: ${NC}")" choice < /dev/tty
+            read -r -p "$(echo -e "   ${H_CYAN}选择 [1-3]: ${NC}")" choice < /dev/tty
 
-            if [ "$choice" = "2" ]; then
-                read -r -p "$(echo -e "   ${H_CYAN}输入仓库地址 (如 https://github.com/user/repo): ${NC}")" repo_url < /dev/tty
-                # 确保是 HTTPS 格式
-                repo_url="${repo_url%.git}.git"
-            else
-                # 创建新仓库
-                repo_url="https://github.com/$gh_user/$REPO_NAME.git"
-                if ! gh repo view "$gh_user/$REPO_NAME" &>/dev/null; then
-                    log "创建公开仓库..."
-                    exe gh repo create "$REPO_NAME" --description "CachyOS system backup" --public
-                fi
-            fi
+            case "$choice" in
+                1)
+                    repo_url="https://github.com/$gh_user/$REPO_NAME.git"
+                    if ! gh repo view "$gh_user/$REPO_NAME" &>/dev/null; then
+                        log "创建 GitHub 公开仓库..."
+                        exe gh repo create "$REPO_NAME" --description "CachyOS system backup" --public
+                    fi
+                    ;;
+                2)
+                    repo_url="https://gitee.com/$gh_user/$REPO_NAME.git"
+                    log "请手动在 Gitee 创建仓库: $repo_url"
+                    ;;
+                *)
+                    read -r -p "$(echo -e "   ${H_CYAN}输入仓库地址 (如 https://github.com/user/repo): ${NC}")" repo_url < /dev/tty
+                    repo_url="${repo_url%.git}.git"
+                    ;;
+            esac
         else
             # 非交互式环境，使用默认配置
             repo_url="https://github.com/$gh_user/$REPO_NAME.git"
             log "非交互式环境，使用默认仓库: $repo_url"
             if ! gh repo view "$gh_user/$REPO_NAME" &>/dev/null; then
-                log "创建公开仓库..."
+                log "创建 GitHub 公开仓库..."
                 exe gh repo create "$REPO_NAME" --description "CachyOS system backup" --public
             fi
         fi
