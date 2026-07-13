@@ -1,0 +1,60 @@
+// 动画配置
+// 参考配置来源：https://github.com/SHORiN-KiWATA/shorin-niri
+
+animations {
+    // 禁用全部动画
+    //off
+
+    // 总体动画速度，浮点数，默认为1，小于1加快，大于1减慢
+    slowdown 0.98114514
+
+    // 切换工作区的动画
+    workspace-switch {
+        // spring弹簧动画类型
+        // damping-ratio 设置阻尼，默认1.0，小于1.0会产生回弹，大于1.0会导致bug
+        // stiffness 设置刚度，数值越大动画会越硬越生涩
+        // epsilon 当动画运动速度和距离小于这个值的时候会判定动画停止
+        spring damping-ratio=0.82 stiffness=400 epsilon=0.0001
+    }
+
+    // 左右切换聚焦的动画
+    horizontal-view-movement {
+        spring damping-ratio=0.84 stiffness=400 epsilon=0.0001
+    }
+
+    // 打开窗口的动画
+    window-open {
+        spring damping-ratio=1.0 stiffness=1000 epsilon=0.0001
+    }
+
+    // 关闭窗口的动画
+    window-close {
+        spring damping-ratio=0.8 stiffness=400 epsilon=0.0001
+    }
+
+    // 移动窗口的动画。包括合并列、上下移动窗口、合并/踢出列等
+    window-movement {
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+    }
+
+    // 按照预设调整窗口大小时的动画
+    window-resize {
+        spring damping-ratio=0.9 stiffness=500 epsilon=0.0001
+    }
+
+    // 配置通知动画
+    config-notification-open-close {
+        spring damping-ratio=0.6 stiffness=1200 epsilon=0.001
+    }
+
+    // 开启截图UI的动画
+    screenshot-ui-open {
+        duration-ms 300
+        curve "ease-out-quad"
+    }
+
+    // 开关overview的动画
+    overview-open-close {
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+    }
+}

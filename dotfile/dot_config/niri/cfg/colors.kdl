@@ -1,0 +1,19 @@
+// 颜色配置
+// 参考配置来源：https://github.com/SHORiN-KiWATA/shorin-niri
+
+layout {
+    focus-ring {
+        // 聚焦环颜色（渐变）
+        active-gradient from="#88d6bbcc" to="#a8cbe2cc" angle=135
+        // 紧急颜色
+        urgent-color "#ffb4ab"
+    }
+}
+
+// Recent-windows 高亮颜色
+recent-windows {
+    highlight {
+        active-color "#343b38"
+        urgent-color "#ffb4ab"
+    }
+}

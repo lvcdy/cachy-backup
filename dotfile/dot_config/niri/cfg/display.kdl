@@ -1,0 +1,9 @@
+// ────────────── Output Configuration ──────────────
+// You can run `niri msg outputs` to get the correct name for your displays.
+// You will have to remove "/-" and edit it before it takes effect.
+// https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
+
+output "Virtual-1" {
+    mode "2258x1359@59.999" // Set resolution and refresh rate
+    scale 1.25 // 1.5x scaling
+}

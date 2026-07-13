@@ -1,0 +1,19 @@
+// 杂项配置
+// 参考配置来源：https://github.com/SHORiN-KiWATA/shorin-niri
+
+// 隐藏窗口标题栏
+prefer-no-csd
+
+// 截图保存位置
+screenshot-path null
+
+// Debug 配置
+debug {
+    // 允许通知操作和窗口激活
+    honor-xdg-activation-with-invalid-serial
+}
+
+// 热键覆盖层
+hotkey-overlay {
+    skip-at-startup
+}
