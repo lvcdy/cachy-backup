@@ -151,7 +151,9 @@ prepare_restore() {
         exe git clone "$repo_url" "$STAGING_DIR" || fatal "克隆失败，请检查仓库地址"
     else
         log "更新备份仓库..."
-        exe git -C "$STAGING_DIR" pull || fatal "更新失败"
+        # fetch + reset 处理远程 force push 导致的历史分叉
+        exe git -C "$STAGING_DIR" fetch origin || fatal "获取远程更新失败"
+        exe git -C "$STAGING_DIR" reset --hard origin/main || fatal "同步到远程失败"
     fi
 
     if [ ! -d "$STAGING_DIR/packages" ]; then

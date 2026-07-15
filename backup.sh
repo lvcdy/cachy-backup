@@ -182,7 +182,13 @@ prepare_restore() {
         exe git clone "$repo_url" "$STAGING_DIR" || fatal "克隆失败，请检查仓库地址"
     else
         log "更新备份仓库..."
-        exe git -C "$STAGING_DIR" pull || fatal "更新失败"
+        # 优先 rebase 保留本地未推送的备份；失败时 reset 到远程（处理 force push）
+        exe git -C "$STAGING_DIR" pull --rebase || {
+            warn "pull --rebase 失败，重置到远程最新..."
+            exe git -C "$STAGING_DIR" rebase --abort 2>/dev/null || true
+            exe git -C "$STAGING_DIR" fetch origin
+            exe git -C "$STAGING_DIR" reset --hard origin/main || fatal "同步到远程失败"
+        }
     fi
 
     if [ ! -d "$STAGING_DIR/packages" ]; then
