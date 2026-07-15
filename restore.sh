@@ -146,9 +146,9 @@ prepare_restore() {
     info_kv "仓库地址" "$repo_url"
 
     if [ ! -d "$STAGING_DIR/.git" ]; then
-        log "克隆备份仓库..."
+        log "克隆备份仓库（浅克隆）..."
         rm -rf "$STAGING_DIR"
-        exe git clone "$repo_url" "$STAGING_DIR" || fatal "克隆失败，请检查仓库地址"
+        exe git clone --depth 1 "$repo_url" "$STAGING_DIR" || fatal "克隆失败，请检查仓库地址"
     else
         log "更新备份仓库..."
         # fetch + reset 处理远程 force push 导致的历史分叉

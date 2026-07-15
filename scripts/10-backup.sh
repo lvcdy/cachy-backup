@@ -460,9 +460,9 @@ push_to_github() {
     # 初始化/克隆仓库
     if [ ! -d "$STAGING_DIR/.git" ]; then
         if git ls-remote "$repo_url" &>/dev/null; then
-            log "克隆已有远程仓库..."
+            log "克隆已有远程仓库（浅克隆）..."
             rm -rf "$STAGING_DIR"
-            exe git clone "$repo_url" "$STAGING_DIR"
+            exe git clone --depth 1 "$repo_url" "$STAGING_DIR"
         else
             log "初始化本地仓库..."
             mkdir -p "$STAGING_DIR"
@@ -470,6 +470,10 @@ push_to_github() {
             git -C "$STAGING_DIR" branch -M main
             git -C "$STAGING_DIR" remote add origin "$repo_url"
         fi
+    else
+        # staging 已存在，同步到远程最新（处理 force push 导致的历史分叉）
+        git -C "$STAGING_DIR" fetch --depth 1 origin 2>/dev/null || true
+        git -C "$STAGING_DIR" reset --hard origin/main 2>/dev/null || true
     fi
 
     # 同步文件
