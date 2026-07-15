@@ -1,0 +1,3 @@
+WARN  widget.cat: unrecognized widget type "noctalia/bongocat:cat"
+
+✓ Config is valid (1 warning(s))

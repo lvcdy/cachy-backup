@@ -1,26 +1,13 @@
-# 压缩包和镜像
 *.tar
 *.tar.gz
 *.zip
 *.iso
 *.pkg.tar.zst
-
-# 日志
 *.log
-
-# 核心转储
 core
-
-# 备份文件
 *.bak
 *.backup
-
-# Rime 编译产物
 *.prism.bin
 *.table.bin
-
-# Rime 数据库和编译产物
 private_rime_ice.userdb/
 private_rime_ice.userdb.txt
-*.prism.bin
-*.table.bin

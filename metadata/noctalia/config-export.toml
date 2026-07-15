@@ -1,0 +1,82 @@
+[bar.default]
+
+[calendar]
+enabled = true
+
+[location]
+address = "jinzhou,China"
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+widget_order = [ "lockscreen-login-box@Virtual-1" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@Virtual-1"]
+    box_height = 70.0
+    box_width = 400.0
+    cx = 1129.0
+    cy = 1240.0
+    output = "Virtual-1"
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@Virtual-1".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        input_opacity = 1.0
+        input_radius = 6.0
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_password_hint = true
+
+[plugins]
+enabled = []
+
+[shell]
+date_format = "%A, %x %X"
+external_ip_enabled = true
+lang = "zh-Hans"
+polkit_agent = true
+screen_time_enabled = true
+time_format = "{:%H:%M:%S}"
+
+    [shell.greeter_sync]
+    auto_sync = true
+
+    [shell.panel]
+    transparency_mode = "glass"
+
+    [shell.screenshot]
+    directory = "/home/zhz/Pictures/Screenshorts"
+
+[theme]
+builtin = "Catppuccin"
+community_palette = "Oxocarbon"
+mode = "light"
+source = "builtin"
+wallpaper_scheme = "m3-content"
+
+    [theme.templates]
+    builtin_ids = [ "niri" ]
+
+[wallpaper]
+directory = "/home/zhz/Pictures/Wallpapers"
+
+    [wallpaper.default]
+    path = "/home/zhz/Pictures/Wallpapers/FCD2D539E2FA1A71D3E156BE3D2E4DE1.png"
+
+    [wallpaper.last]
+    path = "/home/zhz/Pictures/Wallpapers/FCD2D539E2FA1A71D3E156BE3D2E4DE1.png"
+
+    [wallpaper.monitors.Virtual-1]
+    path = "/home/zhz/Pictures/Wallpapers/FCD2D539E2FA1A71D3E156BE3D2E4DE1.png"
+
+[widget.cat]
+type = "noctalia/bongocat:cat"

@@ -1,0 +1,99 @@
+// Niri configuration for Noctalia v5
+// 参考配置来源：https://github.com/SHORiN-KiWATA/shorin-niri
+
+// noctalia v5 自启动
+spawn-at-startup "noctalia"
+
+// noctalia v5 窗口规则
+window-rule {
+  match app-id="dev.noctalia.Noctalia"
+  open-floating true
+  default-column-width { fixed 1080; }
+  default-window-height { fixed 920; }
+}
+
+// noctalia v5 背景层规则
+layer-rule {
+  match namespace="^noctalia-backdrop"
+  place-within-backdrop true
+}
+
+// 截图保存位置
+screenshot-path "~/Pictures/Screenshots/Niri-screenshots/%Y-%m-%d %H-%M-%S.png"
+
+// 环境变量
+environment {
+    // 输入法环境变量
+    XMODIFIERS "@im=fcitx"
+    // qt主题
+    QT_QPA_PLATFORMTHEME "gtk3"
+    QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+    // 解决quickshell图标主题缺失问题
+    QS_ICON_THEME "Adwaita"
+    // GTK软件使用的渲染器，可以解决n卡双显卡导致的GTK应用启动缓慢问题
+    GSK_RENDERER "gl"
+    // 默认文本编辑器
+    EDITOR "vim"
+}
+
+// 光标配置
+cursor {
+    xcursor-theme "breeze_cursors"
+    xcursor-size 30
+    hide-after-inactive-ms 15000
+}
+
+// 输入配置
+input {
+    keyboard {
+        xkb {
+            // 如果你需要覆盖键盘布局，取消注释并修改
+            //layout "us"
+        }
+        // 启用数字锁定键
+        //numlock
+        repeat-delay 250
+        repeat-rate 35
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+
+    mouse {
+        accel-speed 0
+        accel-profile "flat"
+    }
+}
+
+// 自启动应用
+spawn-sh-at-startup "sleep 1 && waypaper --random"
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri & /usr/lib/xdg-desktop-portal-gnome"
+spawn-sh-at-startup "systemctl --user set-environment XDG_SESSION_CLASS=user"
+spawn-at-startup "mako"
+spawn-at-startup "waybar"
+spawn-at-startup "fcitx5"
+spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
+spawn-at-startup "swayosd-server"
+
+// 取消启动niri时自动开启快捷键教程
+hotkey-overlay {
+    skip-at-startup
+}
+
+// 隐藏窗口标题栏
+prefer-no-csd
+
+// noctalia v5 include
+include "noctalia.kdl"
+
+// 拆分配置文件 include
+include "cfg/keybinds.kdl"
+include optional=true "cfg/rules.kdl"
+include optional=true "cfg/display.kdl"
+include optional=true "cfg/animation.kdl"
+include optional=true "cfg/layout.kdl"
+include optional=true "cfg/blur.kdl"
+include optional=true "cfg/colors.kdl"
